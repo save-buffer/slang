@@ -1,17 +1,45 @@
-fact(0) : (i32) -> i32
+def point
 {
-    1.
+    x : r64;
+    y : r64;
+    z : r64;
 }
+
+def point0
+{
+    x : r64 -> 0.0;
+    y : r64 -> 0.0;
+    z : r64 -> 0.0;
+}
+
+ge(x, y) : (i64, i64) -> bool
+{
+    when x >= y -> true.
+    else false.
+}
+
+le(x, y) : (i64, i64) -> bool
+{
+    when x <= y -> true.
+    else false.
+}
+
+less(x, y) : (i64, i64) -> bool
+{
+    !ge(x, y).
+}
+
 /* /* asdfasdf */ */
 fact(x) : (i32) -> i32
 {
-    fact(x - 1).
+    when x = 0 -> 1.
+    else fact(x - 1).
 }
 // asdf
 main(argc, argv) : (i32, i8 *) -> complex
 {
-   let a : r64 -> -3 - 8i + 1.01;
+    let a : complex -> -3 - 8i + fact(argc);
    
-   a.
+    a.
 }
 /*

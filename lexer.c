@@ -6,14 +6,14 @@ typedef enum
     token_invalid,
     token_eof = '\0',
 
-    token_if = 1,
+    token_when = 1,
     token_else = 2,
     token_for = 3,
     token_while = 4,
     token_let = 5,
     token_true = 6,
     token_false = 7,   
-    token_comment = 8,    
+    token_comment = 8,
     token_r32 = 9,
     token_r64 = 10,
     token_i8 = 11,
@@ -27,15 +27,20 @@ typedef enum
     token_string = 19,
     token_bool = 20,
     token_complex = 21,
+    token_def = 22,
 
-    token_int_literal,
-    token_real_literal,
-    token_complex_literal,
-    token_string_literal,
+    token_int_literal = 23,
+    token_real_literal = 24,
+    token_complex_literal = 25,
+    token_string_literal = 26,
     
-    token_id,
-    
-    token_arrow,
+    token_id = 27,
+    token_ge = 28,
+    token_le = 29,
+    token_arrow = 30,
+    token_lshift = 31,
+    token_rshift = 32,
+    token_nequal = 33,
     token_colon = ':',
     token_semicolon = ';',
     token_exclam = '!',
@@ -57,6 +62,7 @@ typedef enum
     token_greater = '>',
     token_less = '<',
     token_slash = '/',
+    token_tilde = '~',
 
     token_left_bracket = '[',
     token_right_bracket = ']',
@@ -227,8 +233,41 @@ void next_token(lexer *lex, token *tok)
 	    return;
 	}
 	prev_char(lex);
-    case '\0':
+    case '>':
+	next_char(lex);
+	if(lex->curr_char == '=')
+	{
+	    tok->type = token_ge;
+	    return;
+	}
+	else if(lex->curr_char == '>')
+	{
+	    tok->type = token_rshift;
+	    return;
+	}
+	prev_char(lex);
+    case '<':
+	next_char(lex);
+	if(lex->curr_char == '=')
+	{
+	    tok->type = token_le;
+	    return;
+	}
+	else if(lex->curr_char == '<')
+	{
+	    tok->type = token_lshift;
+	    return;
+	}
+	prev_char(lex);
     case '!':
+	next_char(lex);
+	if(lex->curr_char == '=')
+	{
+	    tok->type = token_nequal;
+	    return;
+	}
+	prev_char(lex);
+    case '\0':
     case '@':
     case '#':
     case '$':
@@ -243,8 +282,6 @@ void next_token(lexer *lex, token *tok)
     case '?':
     case '.':
     case ',':
-    case '>':
-    case '<':
     case '[':
     case ']':
     case '{':
@@ -252,6 +289,7 @@ void next_token(lexer *lex, token *tok)
     case '|':
     case ':':
     case ';':
+    case '~':
 	tok->type = lex->curr_char;
 	return;
     }
@@ -278,8 +316,8 @@ void next_token(lexer *lex, token *tok)
 	prev_char(lex);
 	
 	((char *)tok->value)[size] = 0;
-	if(strcmp((char *)tok->value, "if") == 0)
-	    tok->type = token_if;
+	if(strcmp((char *)tok->value, "when") == 0)
+	    tok->type = token_when;
 	else if(strcmp((char *)tok->value, "else") == 0)
 	    tok->type = token_else;
 	else if(strcmp((char *)tok->value, "for") == 0)
@@ -318,6 +356,8 @@ void next_token(lexer *lex, token *tok)
 	    tok->type = token_true;
 	else if(strcmp((char *)tok->value, "false") == 0)
 	    tok->type = token_false;
+	else if(strcmp((char *)tok->value, "def") == 0)
+	    tok->type = token_def;
 	else
 	    tok->type = token_id;
     }
@@ -341,7 +381,6 @@ void next_token(lexer *lex, token *tok)
 		tok->value = malloc(sizeof(double));
 		*(double *)tok->value = a + b;
 		tok->type = token_real_literal;
-		prev_char(lex);
 	    }
 	    else
 	    {
@@ -417,6 +456,7 @@ void print_token(token *tok)
     case '|':
     case ':':
     case ';':
+    case '~':
 	printf("%c ", tok->type);
 	break;
     case token_r32:
@@ -470,8 +510,8 @@ void print_token(token *tok)
     case token_string_literal:
 	printf("string_literal ");
 	break;
-    case token_if:
-	printf("if ");
+    case token_when:
+	printf("when ");
 	break;
     case token_else:
 	printf("else ");
@@ -483,7 +523,7 @@ void print_token(token *tok)
 	printf("for ");
 	break;
     case token_arrow:
-	printf("arrow ");
+	printf("-> ");
 	break;
     case token_id:
 	printf("identifier ");
@@ -496,6 +536,18 @@ void print_token(token *tok)
 	break;
     case token_false:
 	printf("false ");
+	break;
+    case token_def:
+	printf("def ");
+	break;
+    case token_ge:
+	printf(">= ");
+	return;
+    case token_le:
+	printf("<= ");
+	break;
+    case token_nequal:
+	printf("!= ");
 	break;
     default:
 	printf("some other one %d ", tok->type);
