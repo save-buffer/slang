@@ -7,7 +7,7 @@
                              identifier ( parameter_list ) : ( type_list ) -> ( type_list ) block
   type_declaration         = def identifier { type_specifier_list }
   type_specifier_list      = type_specifier | type_specifier type_specifier_list
-  type_specifier           = identifier : type ; | identifier : type -> expression
+  type_specifier           = identifier : type ; | identifier : type -> expr ;
   parameter_list           = parameter | parameter , parameter_list
   parameter_name           = identifier
   literal                  = int_literal | real_literal | complex_literal | string_literal | true | false
@@ -70,26 +70,38 @@ typedef enum
     expr7,
     argument_list,
     error,
+    eof,
     nonterminal_count,
 } nonterminals;
 
 typedef struct
 {
-    token curr_tok;
+    token *curr_tok;
     token *curr;
 } parser;
 
 typedef struct ast_node
 {
     nonterminals type;
-    token terminal;
+    token *terminal;
     struct ast_node *productions[11];
 } ast_node;
 
 void next_tok(parser *parse)
 {
-    parse->curr_tok = *curr;
+    parse->curr_tok = parse->curr;
     parse->curr++;
+}
+
+token *peek_tok(parser *parse)
+{
+    return(parse->curr_tok + 1);
+}
+
+void prev_token(parser *parse)
+{
+    parse->curr--;
+    parse->curr_tok = (parse->curr - 1);
 }
 
 ast_node *make_node(nonterminals nonterminal)
