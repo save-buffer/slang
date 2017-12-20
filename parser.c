@@ -1,115 +1,60 @@
 #pragma once
-#include <malloc.h>
-/*
-  program                  = decl_list
-  decl_list                = function | type_declaration | function decl_list | type_declaration decl_list
-  function                 = identifier ( parameter_list ) : ( type_list ) -> type block
-                             identifier ( parameter_list ) : ( type_list ) -> ( type_list ) block
-  type_declaration         = def identifier { type_specifier_list }
-  type_specifier_list      = type_specifier | type_specifier type_specifier_list
-  type_specifier           = identifier : type ; | identifier : type -> expression
-  parameter_list           = parameter | parameter , parameter_list
-  parameter_name           = identifier
-  literal                  = int_literal | real_literal | complex_literal | string_literal | true | false
-  type_list                = type | type , type_list
-  type                     = r32 | r64 | i8 | i16 | i32 | i64 | u8 | u16 | u32 | u64 | string | bool | complex | identifier
-  block                    = statement . | { semicolon_statement_list statement . } | { statement . }
-  semicolon_statement_list = statement ; | statement ; semicolon_statement_list
-  statement                = block | conditional | declaration | expr
-  conditional              = when expr -> block | when expr -> block else block
-  declaration              = let identifier : type  -> block
-  expr                     = ( expr ) | expr1
-  expr1                    = expr operator1 expr | expr2
-  operator1                = <vertical bar> | ^ | &
-  expr2                    = expr operator2 expr | expr3
-  operator2                = < | > | <= | >= | = | !=
-  expr3                    = expr operator3 expr | expr4
-  operator3                = << | >>
-  expr4                    = expr operator4 expr | expr5
-  operator4                = + | -
-  expr5                    = expr operator5 expr | expr6
-  operator5                = * | / | %
-  expr6                    = unary_operator expr | expr7
-  unary_operator           = ~ | ! | ( type ) | * | &
-  expr7                    = expr ( argument_list ) | expr [ argument_list ] | expr . identifier | identifier | literal
-  argument_list            = <epsilon> | expr | expr argument_list
- */
-
-typedef enum
+#include "parser.h"
+//TODO(sasha): make parser keep track of line number
+void parser_error(parser *parse, const char *error)
 {
-    terminal,
-    program,
-    decl_list,
-    function,
-    type_declaration,
-    type_specifier_list,
-    type_specifier,
-    parameter_list,
-    parameter_name,
-    literal,
-    type_list,
-    type,
-    block,
-    semicolon_statement_list,
-    statement,
-    conditional,
-    declaration,
-    expr,
-    expr1,
-    operator1,
-    expr2,
-    operator2,
-    expr3,
-    operator3,
-    expr4,
-    operator4,
-    expr5,
-    operator5,
-    expr6,
-    unary_operator,
-    expr7,
-    argument_list,
-    nonterminal_count,
-} nonterminals;
-
-typedef struct
-{
-    token *curr;
-} parser;
-
-typedef struct ast_node
-{
-    nonterminals type;
-    token terminal;
-    struct ast_node *productions[11];
-} ast_node;
-
-typedef struct ast_node_stack
-{
-    struct ast_node_stack *prev;
-    ast_node *curr;
-} ast_node_stack;
-
-void push(ast_node_stack **stack, ast_node *element)
-{
-    ast_node_stack *new_node = malloc(sizeof(ast_node_stack));
-    new_node->prev = *stack;
-    new_node->curr = element;
-    *stack = new_node;
+    printf("%s", error);
 }
 
-ast_node *pop(ast_node_stack **stack)
+ast_node *parse_type_declaration(parser *parse)
 {
-    ast_node *popped = (*stack)->curr;
-    ast_node_stack *to_free = *stack;
-    *stack = (*stack)->prev;
-    free(to_free);
-    return(popped);
+    ast_node *new = make_node(type_declaration);
+    if(parse->curr_tok.type == token_def)
+    {
+	new->productions[0] = make_terminal(parse);
+	next_tok(parse);
+	if(parse->curr_tok.type == tok_id)
+	{
+	    new->productions[1] = make_terminal(parse);
+	    next_tok(parse);
+	    if(parse->curr_tok == '{')
+	    {
+		new->productions[2] = make_terminal(parse);
+		new->productions[3] = parse_type_specifier_list(parse);
+	    }
+	}
+    }
+}
+
+ast_node *parse_decl_list(parser *parse)
+{
+    ast_node *new = make_node(decl_list);
+    new->productions[0] = parse_function(parse);
+    if(new->productions[0].type == error)
+    {
+	free(new->productions[0]);
+	new->productions[0] = parse_type_declaration(parse);
+	if(new->productions[0].type == error)
+	{
+	    //TODO(sasha): should errors only happen at the terminal level?
+	    parser_error(parse, "Parser error!");
+	}	
+    }    
+    new->productions[1] = parse_decl_list(parse);
+    return(new);
+}
+
+ast_node *parse_program(parser *parse)
+{
+    ast_node *new = make_node(program);
+    new->productions[0] = parse_decl_list(parse);
+    return(new);
 }
 
 ast_node *parse(token *tokens)
 {
     parser parse;
     parse.curr = tokens;
-    
+    next_tok(&parse);
+    parse_program(&parse);
 }
