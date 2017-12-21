@@ -3,8 +3,9 @@
 /*
   program                  = decl_list
   decl_list                = function | type_declaration | function decl_list | type_declaration decl_list
-  function                 = identifier ( parameter_list ) : ( type_list ) -> type block
-                             identifier ( parameter_list ) : ( type_list ) -> ( type_list ) block
+  function                 = single_return_function | multi_return_function
+  single_return_function   = identifier ( parameter_list ) : ( type_list ) -> type block
+  multi_return_function    = identifier ( parameter_list ) : ( type_list ) -> ( type_list ) block
   type_declaration         = def identifier { type_specifier_list }
   type_specifier_list      = type_specifier | type_specifier type_specifier_list
   type_specifier           = identifier : type ; | identifier : type -> expr ;
@@ -40,7 +41,8 @@ typedef enum
     terminal,
     program,
     decl_list,
-    function,
+    single_return_function,
+    mult_return_function,
     type_declaration,
     type_specifier_list,
     type_specifier,
@@ -84,7 +86,7 @@ typedef struct ast_node
 {
     nonterminals type;
     token *terminal;
-    struct ast_node *productions[11];
+    struct ast_node *production[11];
 } ast_node;
 
 void next_tok(parser *parse)
