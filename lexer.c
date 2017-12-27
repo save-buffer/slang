@@ -1,5 +1,9 @@
 #pragma once
+#if defined(__MACH__)
+#include <stdlib.h>
+#else 
 #include <malloc.h>
+#endif
 
 typedef enum
 {
@@ -135,7 +139,7 @@ void lexer_error(lexer *lex, const char *msg)
     printf("Lexer error at line %d column %d: %s\n", lex->line, lex->column, msg);
 }
 
-int strcmp(char *a, char *b)
+int strcmp(const char *a, const char *b)
 {
     while(*a && (*a == *b))
     {

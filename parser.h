@@ -1,5 +1,10 @@
 #pragma once
+#if defined(__MACH__)
+#include <stdlib.h>
+#else
 #include <malloc.h>
+#endif
+
 /*
   program                  = decl_list
   decl_list                = function | type_declaration | function decl_list | type_declaration decl_list
@@ -19,7 +24,7 @@
   statement                = block | conditional | declaration | expr
   conditional              = when expr -> block | when expr -> block else block
   declaration              = let identifier : type  -> block
-  expr                     = ( expr ) | expr1
+  expr                     = ( type ) expr | ( expr ) | expr1
   expr1                    = expr operator1 expr | expr2
   operator1                = <vertical bar> | ^ | &
   expr2                    = expr operator2 expr | expr3
@@ -31,7 +36,8 @@
   expr5                    = expr operator5 expr | expr6
   operator5                = * | / | %
   expr6                    = unary_operator expr | expr7
-  unary_operator           = ~ | ! | ( type ) | * | &
+  unary_operator           = ~ | ! | cast | * | &
+  cast                     = ( type )
   expr7                    = expr ( argument_list ) | expr [ argument_list ] | expr . identifier | identifier | literal
   argument_list            = <epsilon> | expr | expr argument_list
  */
@@ -69,6 +75,7 @@ typedef enum
     operator5,
     expr6,
     unary_operator,
+    cast,
     expr7,
     argument_list,
     error,
@@ -89,10 +96,22 @@ typedef struct ast_node
     struct ast_node *production[11];
 } ast_node;
 
-void next_tok(parser *parse)
+void next_tok_(parser *parse)
 {
     parse->curr_tok = parse->curr;
     parse->curr++;
+}
+
+void consume_comments(parser *parse)
+{
+    while(parse->curr_tok->type == token_comment)
+	next_tok_(parse);
+}
+
+void next_tok(parser *parse)
+{
+    consume_comments(parse);
+    next_tok_(parse);
 }
 
 token *peek_tok(parser *parse)
@@ -119,3 +138,11 @@ ast_node *make_terminal(parser *parse)
     result->terminal = parse->curr_tok;
     return(result);
 }
+
+//TODO(sasha): make parser keep track of line number
+ast_node *parser_error(parser *parse, const char *error_string)
+{
+    printf("Parser error: %s\n", error_string);
+    return make_node(error);
+}
+
