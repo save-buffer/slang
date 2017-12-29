@@ -1,4 +1,6 @@
 #pragma once
+#include <stdio.h>
+#include <string.h>
 #if defined(__MACH__)
 #include <stdlib.h>
 #else
@@ -93,7 +95,7 @@ typedef struct ast_node
 {
     nonterminals type;
     token *terminal;
-    struct ast_node *production[11];
+    struct ast_node *production[16];
 } ast_node;
 
 void next_tok_(parser *parse)
@@ -128,6 +130,7 @@ void prev_token(parser *parse)
 ast_node *make_node(nonterminals nonterminal)
 {
     ast_node *result = malloc(sizeof(ast_node));
+    memset(result->production, 0, sizeof(result->production) / sizeof(result->production[0]));
     result->type = nonterminal;
     return(result);
 }

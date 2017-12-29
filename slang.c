@@ -23,6 +23,7 @@ int main(int argc, char **argv)
 	lex(buff, tokenized_src, &token_count);
 	print_token_stream(tokenized_src, token_count);
 	ast_node *root = parse(tokenized_src);
+	render_ast("ast.dot", root);
     }
     else
     {
