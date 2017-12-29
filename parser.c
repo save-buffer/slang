@@ -218,10 +218,10 @@ ast_node *parse_type_specifier(parser *parse)
 
 ast_node *parse_type_specifier_list(parser *parse)
 {
-    if(peek_tok(parse)->type == '}')
-	return(0);
     ast_node *new = make_node(type_specifier_list);
     new->production[0] = parse_type_specifier(parse);
+    if(peek_tok(parse)->type == '}')
+	return(new);
     next_tok(parse);
     new->production[1] = parse_type_specifier_list(parse);
     return(new);
@@ -272,7 +272,6 @@ ast_node *parse_type_declaration(parser *parse)
     }
     return(new);
 }
-
 
 ast_node *parse_decl_list(parser *parse)
 {
@@ -397,10 +396,12 @@ const char *ast_node_to_string(ast_node *node)
 static void render_ast_(FILE *diagram, ast_node *cur, int parent)
 {
     static int count = 1;
-    count++;
+
     int this = count;
+    if(parent != 0)
+	fprintf(diagram, "node%i -> node%i;\n", parent, this);
     fprintf(diagram, "node%i [label=\"%s\"];\n", this, ast_node_to_string(cur));
-    fprintf(diagram, "node%i -> node%i;\n", parent, this);
+    count++;
     for(int i = 0; cur->production[i] != 0; i++)
     {
 	render_ast_(diagram, cur->production[i], this);
