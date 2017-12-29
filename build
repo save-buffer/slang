@@ -1,1 +1,1 @@
-gcc -std=c11 -ggdb slang.c -o slang
+gcc -std=c11 -Wall -ggdb slang.c -o slang
