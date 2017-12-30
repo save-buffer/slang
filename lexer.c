@@ -34,25 +34,15 @@ void prev_char(lexer *lex)
 
 void consume_whitespace(lexer *lex)
 {
-    for(;;)
-    {
-	switch(lex->curr_char)
-	{
-	case ' ':
-	case '\t':
-	case '\r':
-	case '\n':
-	    break;
-	default:
-	    return;
-	}
+    while(lex->curr_char == ' ' ||
+	  lex->curr_char == '\t' ||
+	  lex->curr_char == '\n')
 	next_char(lex);
-    }
 }
 
 void lexer_error(lexer *lex, const char *msg)
 {
-    printf("Lexer error at line %d column %d: %s\n", lex->line, lex->column, msg);
+    printf("Lexer error in %s:%i:%i: %s\n", lex->file, lex->line, lex->column, msg);
 }
 
 int strcmp(const char *a, const char *b)
@@ -332,13 +322,16 @@ void next_token(lexer *lex, token *tok)
 void lex(char *src, char *file, token *tokens, int *token_count)
 {
     lexer lex = {};
+    lex.file = file;
     lex.curr = src;
+    lex.line = 1;
+    lex.column = 1;
     *token_count = 0;
     do
     {
 	next_char(&lex);
 	consume_whitespace(&lex);
-	tokens->file = file;
+	tokens->file = lex.file;
 	tokens->line = lex.line;
 	tokens->column = lex.column;
 	++*token_count;
