@@ -20,7 +20,7 @@ int main(int argc, char **argv)
 
 	int token_count;
 	token tokenized_src[size];
-	lex(buff, tokenized_src, &token_count);
+	lex(buff, argv[1], tokenized_src, &token_count);
 	print_token_stream(tokenized_src, token_count);
 	ast_node *root = parse(tokenized_src);
 	render_ast("ast.dot", root);

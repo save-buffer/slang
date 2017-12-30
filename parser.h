@@ -11,21 +11,21 @@
   program                  = decl_list
   decl_list                = function | type_declaration | function decl_list | type_declaration decl_list
   function                 = single_return_function | multi_return_function
-  single_return_function   = identifier ( parameter_list ) : ( type_list ) -> type block
-  multi_return_function    = identifier ( parameter_list ) : ( type_list ) -> ( type_list ) block
+  single_return_function   = identifier ( identifier_list ) : ( type_list ) -> type block
+  multi_return_function    = identifier ( identifier_list ) : ( type_list ) -> ( type_list ) block
   type_declaration         = def identifier { type_specifier_list }
   type_specifier_list      = type_specifier | type_specifier type_specifier_list
   type_specifier           = identifier : type ; | identifier : type -> expr ;
-  parameter_list           = parameter | parameter , parameter_list
-  parameter_name           = identifier
+  identifier_list          = identifier | identifier , identifier_list
   literal                  = int_literal | real_literal | complex_literal | string_literal | true | false
   type_list                = type | type , type_list
   type                     = r32 | r64 | i8 | i16 | i32 | i64 | u8 | u16 | u32 | u64 | string | bool | complex | identifier
-  block                    = statement . | { semicolon_statement_list statement . } | { statement . }
-  semicolon_statement_list = statement ; | statement ; semicolon_statement_list
-  statement                = block | conditional | declaration | expr
+  block                    = statement . | { semicolon_statement_list statement . }
+  semicolon_statement_list = statement ; | statement ; semicolon_statement_list | <epsilon>
+  comma_statement_list     = statement | statement , comma_statement_list
+  statement                = block | conditional | declaration | expr | ( comma_statement_list )
   conditional              = when expr -> block | when expr -> block else block
-  declaration              = let identifier : type  -> block
+  declaration              = let identifier : type  -> block | let ( identifier_list ) : ( type_list ) -> block
   expr                     = ( type ) expr | ( expr ) | expr1
   expr1                    = expr operator1 expr | expr2
   operator1                = <vertical bar> | ^ | &
@@ -49,18 +49,19 @@ typedef enum
     terminal,
     program,
     decl_list,
+    function,
     single_return_function,
     mult_return_function,
     type_declaration,
     type_specifier_list,
     type_specifier,
-    parameter_list,
-    parameter_name,
+    identifier_list,
     literal,
     type_list,
     type,
     block,
     semicolon_statement_list,
+    comma_statement_list,
     statement,
     conditional,
     declaration,
@@ -145,7 +146,7 @@ ast_node *make_terminal(parser *parse)
 //TODO(sasha): make parser keep track of line number
 ast_node *parser_error(parser *parse, const char *error_string)
 {
-    printf("Parser error: %s\n", error_string);
+    printf("Parser error in %s:%i:%i: %s\n", parse->curr_tok->file, parse->curr_tok->line, parse->curr_tok->column, error_string);
     return make_node(error);
 }
 

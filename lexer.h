@@ -78,12 +78,16 @@ typedef enum
 
 typedef struct
 {
+    char *file;
+    int line;
+    int column;
     tokens type;
     void *value;
 } token;
 
 typedef struct
 {
+    char *file;
     char *curr;
     char curr_char;
     int line;
@@ -99,6 +103,6 @@ int strcmp(const char *a, const char *b);
 int is_valid_id(lexer *lex);
 long lex_int(lexer *lex);
 void next_token(lexer *lex, token *tok);
-void lex(char *src, token *tokens, int *token_count);
+void lex(char *src, char *file, token *tokens, int *token_count);
 const char *token_to_string(token *tok);
 void print_token_stream(token *tok, int token_count);

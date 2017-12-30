@@ -12,6 +12,17 @@ def point0
     z : r64 -> 0.0;
 }
 
+greater_than_ten(x, y) : (i64, i64) -> (bool, bool)
+{
+    (x > 10, y > 10).
+}
+
+pattern_match(x, y) : (i64, i64) -> bool
+{
+  let (_, a) -> greater_than_ten(y, x);
+  a.
+}
+
 ge(x, y) : (i64, i64) -> bool
 {
     when x >= y -> true.

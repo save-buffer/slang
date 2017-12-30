@@ -3,6 +3,11 @@
 
 ast_node *parse_type(parser *parse);
 
+ast_node *parse_block(parser *parse)
+{
+    return(NULL);
+}
+
 ast_node *parse_type_list(parser *parse)
 {
     return(NULL);
@@ -111,10 +116,8 @@ ast_node *parse_type(parser *parse)
     }
 }
 
-ast_node *parse_function(parser *parse)
+ast_node *parse_single_or_mult_return_function(parser *parse)
 {
-    //TODO(sasha): Make this handle invalid tokens
-    consume_comments(parse);
     ast_node *new = make_node(single_return_function);
     if(parse->curr_tok->type == token_id)
     {
@@ -133,43 +136,57 @@ ast_node *parse_function(parser *parse)
 		if(parse->curr_tok->type == token_arrow)
 		{
 		    new->production[4] = make_terminal(parse);
+		    next_tok(parse);
 		    if(parse->curr_tok->type == '(')
 		    {
+			new->type = mult_return_function;
 			new->production[5] = make_terminal(parse);
 			next_tok(parse);
 			new->production[6] = parse_type_list(parse);
 			next_tok(parse);
+			if(parse->curr_tok->type == ')')
+			{
+			    new->production[7] = make_terminal(parse);
+			}
+			else
+			{
+			    new->production[7] = parser_error(parse, ") expected");
+			}
 		    }
-		    else
-		    {
-			new->production[5] = make_node(error);
-		    }
+		    new->production[8] = parse_block(parse);
 		}
 		else
 		{
-		    new->production[4] = make_node(error);
+		    new->production[4] = parser_error(parse, "-> expected");
 		}
 	    }
 	    else
 	    {
-		new->production[3] = make_node(error);
+		new->production[3] = parser_error(parse, ") expected");
 	    }
 	}
 	else
 	{
-	    new->production[2] = make_node(error);
+	    new->production[1] = parser_error(parse, "( expected");
 	}
     }
     else
     {
-	new->production[0] = make_node(error);
+	new->production[0] = parser_error(parse, "Identifier expected in function declaration");
     }
+    return(new);
+}
+
+ast_node *parse_function(parser *parse)
+{
+    ast_node *new = make_node(function);
+    new->production[0] = parse_single_or_mult_return_function(parse);
+    next_tok(parse);
     return(new);
 }
 
 ast_node *parse_type_specifier(parser *parse)
 {
-    consume_comments(parse);
     ast_node *new = make_node(type_specifier);
     if(parse->curr_tok->type == token_id)
     {
@@ -194,10 +211,7 @@ ast_node *parse_type_specifier(parser *parse)
 		if(parse->curr_tok->type == ';')
 		    new->production[6] = make_terminal(parse);
 		else
-		{
 		    new->production[6] = parser_error(parse, "; expected");
-
-		}
 		return(new);
 	    default:
 		new->production[3] = parser_error(parse, "Expression or ; expected");
@@ -229,7 +243,6 @@ ast_node *parse_type_specifier_list(parser *parse)
 
 ast_node *parse_type_declaration(parser *parse)
 {
-    consume_comments(parse);
     ast_node *new = make_node(type_declaration);
     if(parse->curr_tok->type == token_def)
     {
@@ -275,8 +288,8 @@ ast_node *parse_type_declaration(parser *parse)
 
 ast_node *parse_decl_list(parser *parse)
 {
-    ast_node *new = make_node(decl_list);
     consume_comments(parse);
+    ast_node *new = make_node(decl_list);
     switch(parse->curr_tok->type)
     {
     case token_eof:
@@ -324,6 +337,8 @@ const char *ast_node_to_string(ast_node *node)
 	return("program");
     case decl_list:
 	return("decl_list");
+    case function:
+	return("function");
     case single_return_function:
 	return("single_return_function");
     case mult_return_function:
@@ -334,10 +349,8 @@ const char *ast_node_to_string(ast_node *node)
 	return("type_specifier");
     case type_specifier_list:
 	return("type_specifier_list");
-    case parameter_list:
-	return("parameter_list");
-    case parameter_name:
-	return("parameter_name");
+    case identifier_list:
+	return("identifier_list");
     case literal:
 	return("literal");
     case type_list:
@@ -348,6 +361,8 @@ const char *ast_node_to_string(ast_node *node)
 	return("block");
     case semicolon_statement_list:
 	return("semicolon_statement_list");
+    case comma_statement_list:
+	return("comma_statement_list");
     case statement:
 	return("statement");
     case conditional:
@@ -388,7 +403,10 @@ const char *ast_node_to_string(ast_node *node)
 	return("argument_list");
     case eof:
 	return("eof");
-    default:
+    case error:
+    case nonterminal_count:
+	//NOTE(sasha): no default because we want to handle all cases explicitly.
+	//NOTE(sasha): case nonterminal_count should never happen. If it does, there's an error.
 	return("error");
     }	 
 }
@@ -399,8 +417,8 @@ static void render_ast_(FILE *diagram, ast_node *cur, int parent)
 
     int this = count;
     if(parent != 0)
-	fprintf(diagram, "node%i -> node%i;\n", parent, this);
-    fprintf(diagram, "node%i [label=\"%s\"];\n", this, ast_node_to_string(cur));
+	fprintf(diagram, "\tnode%i -> node%i;\n", parent, this);
+    fprintf(diagram, "\tnode%i [label=\"%s\"];\n", this, ast_node_to_string(cur));
     count++;
     for(int i = 0; cur->production[i] != 0; i++)
     {

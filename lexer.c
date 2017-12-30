@@ -1,5 +1,6 @@
 #pragma once
 #include "lexer.h"
+#include <string.h>
 #if defined(__MACH__)
 #include <stdlib.h>
 #else 
@@ -326,7 +327,9 @@ void next_token(lexer *lex, token *tok)
     }
 }
 
-void lex(char *src, token *tokens, int *token_count)
+//NOTE(sasha): This function allocates a new string on the heap to keep track of the file name.
+//             Is this necessary?
+void lex(char *src, char *file, token *tokens, int *token_count)
 {
     lexer lex = {};
     lex.curr = src;
@@ -335,6 +338,9 @@ void lex(char *src, token *tokens, int *token_count)
     {
 	next_char(&lex);
 	consume_whitespace(&lex);
+	tokens->file = file;
+	tokens->line = lex.line;
+	tokens->column = lex.column;
 	++*token_count;
 	next_token(&lex, tokens);
     } while(tokens++->type != token_eof);
