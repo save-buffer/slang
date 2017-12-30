@@ -10,12 +10,49 @@ ast_node *parse_block(parser *parse)
 
 ast_node *parse_type_list(parser *parse)
 {
-    return(NULL);
+    ast_node *new = make_node(type_list);
+    new->production[0] = parse_type(parse);
+    if(peek_tok(parse)->type == ')')
+	return(new);
+    next_tok(parse);
+    if(parse->curr_tok->type == ',')
+    {
+	new->production[1] = make_terminal(parse);
+	next_tok(parse);
+	new->production[2] = parse_type_list(parse);
+    }
+    else
+    {
+	new->production[1] = parser_error(parse, ", expected");
+    }
+    return(new);
 }
 
-ast_node *parse_parameter_list(parser *parse)
+ast_node *parse_identifier_list(parser *parse)
 {
-    return(NULL);
+    ast_node *new = make_node(identifier_list);
+    if(parse->curr_tok->type == token_id)
+    {
+	new->production[0] = make_terminal(parse);
+	if(peek_tok(parse)->type == ')')
+	    return(new);
+	next_tok(parse);
+	if(parse->curr_tok->type == ',')
+	{
+	    new->production[1] = make_terminal(parse);
+	    next_tok(parse);
+	    new->production[2] = parse_identifier_list(parse);
+	}
+	else
+	{
+	    new->production[1] = parser_error(parse, ", expected");
+	}
+    }
+    else
+    {
+	new->production[0] = parser_error(parse, "identifier expected");
+    }
+    return(new);
 }
 
 ast_node *parse_cast(parser *parse)
@@ -119,60 +156,89 @@ ast_node *parse_type(parser *parse)
 ast_node *parse_single_or_mult_return_function(parser *parse)
 {
     ast_node *new = make_node(single_return_function);
+    int i = 0;
     if(parse->curr_tok->type == token_id)
     {
-	new->production[0] = make_terminal(parse);
+	new->production[i++] = make_terminal(parse);
 	next_tok(parse);
 	if(parse->curr_tok->type == '(')
 	{
-	    new->production[1] = make_terminal(parse);
+	    new->production[i++] = make_terminal(parse);
 	    next_tok(parse);
-	    new->production[2] = parse_parameter_list(parse);
+	    new->production[i++] = parse_identifier_list(parse);
 	    next_tok(parse);
 	    if(parse->curr_tok->type == ')')
 	    {
-		new->production[3] = make_terminal(parse);
+		new->production[i++] = make_terminal(parse);
 		next_tok(parse);
-		if(parse->curr_tok->type == token_arrow)
+		if(parse->curr_tok->type == ':')
 		{
-		    new->production[4] = make_terminal(parse);
+		    new->production[i++] = make_terminal(parse);
 		    next_tok(parse);
 		    if(parse->curr_tok->type == '(')
 		    {
-			new->type = mult_return_function;
-			new->production[5] = make_terminal(parse);
+			new->production[i++] = make_terminal(parse);
 			next_tok(parse);
-			new->production[6] = parse_type_list(parse);
+			new->production[i++] = parse_type_list(parse);
 			next_tok(parse);
 			if(parse->curr_tok->type == ')')
 			{
-			    new->production[7] = make_terminal(parse);
+			    new->production[i++] = make_terminal(parse);
+			    next_tok(parse);
+			    if(parse->curr_tok->type == token_arrow)
+			    {
+				new->production[i++] = make_terminal(parse);
+				next_tok(parse);
+				if(parse->curr_tok->type == '(')
+				{
+				    new->type = mult_return_function;
+				    new->production[i++] = make_terminal(parse);
+				    next_tok(parse);
+				    new->production[i++] = parse_type_list(parse);
+				    next_tok(parse);
+				    if(parse->curr_tok->type == ')')
+				    {
+					new->production[i++] = make_terminal(parse);
+				    }
+				    else
+				    {
+					new->production[i++] = parser_error(parse, ") expected");
+				    }
+				}
+				new->production[i++] = parse_block(parse);
+			    }
+			    else
+			    {
+				new->production[--i] = parser_error(parse, "-> expected");
+			    }
 			}
 			else
 			{
-			    new->production[7] = parser_error(parse, ") expected");
+			    new->production[--i] = parser_error(parse, ") expected");
 			}
 		    }
-		    new->production[8] = parse_block(parse);
+		    {
+			new->production[--i] = parser_error(parse, "( expected");
+		    }
 		}
 		else
 		{
-		    new->production[4] = parser_error(parse, "-> expected");
+		    new->production[--i] = parser_error(parse, ": expected");
 		}
 	    }
 	    else
 	    {
-		new->production[3] = parser_error(parse, ") expected");
+		new->production[--i] = parser_error(parse, ") expected");
 	    }
 	}
 	else
 	{
-	    new->production[1] = parser_error(parse, "( expected");
+	    new->production[--i] = parser_error(parse, "( expected");
 	}
     }
     else
     {
-	new->production[0] = parser_error(parse, "Identifier expected in function declaration");
+	new->production[--i] = parser_error(parse, "Identifier expected in function declaration");
     }
     return(new);
 }

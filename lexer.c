@@ -26,7 +26,7 @@ void prev_char(lexer *lex)
     lex->curr--;
     lex->curr_char = (lex->curr[-1]);
     lex->column--;
-    if(lex->curr_char == '\n')
+    if(lex->curr_char == '\n' || lex->curr[0] == '\n')
 	lex->line--;
     if(lex->curr_char == '\t')
 	lex->column -= 3;
