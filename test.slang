@@ -26,13 +26,13 @@ pattern_match(x, y) : (i64, i64) -> bool
 ge(x, y) : (i64, i64) -> bool
 {
     when x >= y -> true.
-    else false.
+    else -> false.
 }
 
 le(x, y) : (i64, i64) -> bool
 {
     when x <= y -> true.
-    else false.
+    else -> false.
 }
 
 less(x, y) : (i64, i64) -> bool
@@ -44,7 +44,7 @@ less(x, y) : (i64, i64) -> bool
 fact(x) : (i32) -> i32
 {
     when x = 0 -> 1.
-    else fact(x - 1).
+    else -> fact(x - 1).
 }
 // asdf
 main(argc, argv) : (i32, i8 *) -> complex

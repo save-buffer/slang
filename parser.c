@@ -2,13 +2,98 @@
 #include "parser.h"
 
 ast_node *parse_type(parser *parse);
+ast_node *parse_statement(parser *parse);
+ast_node *parse_expr(parser *parse);
+ast_node *parse_block(parser *parse);
+ast_node *parse_semicolon_statement_list(parser *parse);
+ast_node *parse_declaration(parser *parse);
+
+ast_node *parse_declaration(parser *parse)
+{
+    return(NULL);
+}
+
+ast_node *parse_conditional(parser *parse)
+{
+    ast_node *new = make_node(conditional);
+    int i = 0;
+    if(parse->curr_tok->type == token_when)
+    {
+	new->production[i++] = make_terminal(parse);
+	next_tok(parse);
+	new->production[i++] = parse_expr(parse);
+	next_tok(parse);
+	if(parse->curr_tok->type == token_arrow)
+	{
+	    new->production[i++] = make_terminal(parse);
+	    next_tok(parse);
+	    new->production[i++] = parse_block(parse);
+	    next_tok(parse);
+	    if(parse->curr_tok->type == token_else)
+	    {		
+		new->production[i++] = make_terminal(parse);
+		next_tok(parse);
+		if(parse->curr_tok->type == token_arrow)
+		{
+		    new->production[i++] = make_terminal(parse);
+		    next_tok(parse);
+		    new->production[i++] = parse_block(parse);
+		}
+		else
+		{
+		    new->production[--i] = parser_error(parse, "-> expected");
+		}
+	    }
+	}
+	else
+	{
+	    new->production[--i] = parser_error(parse, "-> expected");
+	}
+    }
+    else
+    {
+	new->production[--i] = parser_error(parse, "when expected in conditional");
+    }
+    return(new);
+}
+
+ast_node *parse_comma_statement_list(parser *parse)
+{
+    ast_node *new = make_node(semicolon_statement_list);
+    new->production[0] = parse_statement(parse);
+    if(peek_tok(parse)->type == ')')
+	return(new);
+    next_tok(parse);
+    if(parse->curr_tok->type == ',')
+    {
+	new->production[1] = make_terminal(parse);
+	next_tok(parse);
+	new->production[2] = parse_semicolon_statement_list(parse);
+    }
+    else
+    {
+	new->production[1] = parser_error(parse, ", expected");
+    }
+    return(new);
+}
 
 ast_node *parse_statement(parser *parse)
 {
     ast_node *new = make_node(statement);
-    while(peek_tok(parse)->type != ';' &&
-	  peek_tok(parse)->type != '.')
-	next_tok(parse);
+    switch(parse->curr_tok->type)
+    {
+    case token_when:
+	new->production[0] = parse_conditional(parse);
+	break;
+    case '{':
+	new->production[0] = parse_block(parse);
+	break;
+    case token_let:
+	new->production[0] = parse_declaration(parse);
+	break;
+    default:
+	new->production[0] = parse_expr(parse);
+    }
     return(new);
 }
 

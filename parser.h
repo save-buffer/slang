@@ -27,7 +27,7 @@
   semicolon_statement_list = statement | statement ; semicolon_statement_list
   comma_statement_list     = statement | statement , comma_statement_list
   statement                = block | conditional | declaration | expr | ( comma_statement_list )
-  conditional              = when expr -> block | when expr -> block else block
+  conditional              = when expr -> block | when expr -> block else -> block
   declaration              = let identifier : type  -> block | let ( identifier_list ) : ( type_list ) -> block
   expr                     = ( type ) expr | ( expr ) | expr1
   expr1                    = expr operator1 expr | expr2
@@ -43,7 +43,9 @@
   expr6                    = unary_operator expr | expr7
   unary_operator           = ~ | ! | cast | * | &
   cast                     = ( type )
-  expr7                    = expr ( argument_list ) | expr [ argument_list ] | expr . identifier | identifier | literal
+  expr7                    = function_call | array_lookup | expr . identifier | identifier | literal
+  function_call            = expr ( argument_list ) 
+  array_lookup             = expr [ argument_list ]
   argument_list            = <epsilon> | expr | expr argument_list
  */
 
