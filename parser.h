@@ -7,6 +7,9 @@
 #include <malloc.h>
 #endif
 
+//TODO(sasha): refactor grammar and parser to make type_list and identifier_list allow single items to
+//             not be parenthesized; basically just include the parentheses in the production
+
 /*
   program                  = decl_list
   decl_list                = function | type_declaration | function decl_list | type_declaration decl_list
@@ -20,8 +23,8 @@
   literal                  = int_literal | real_literal | complex_literal | string_literal | true | false
   type_list                = type | type , type_list
   type                     = r32 | r64 | i8 | i16 | i32 | i64 | u8 | u16 | u32 | u64 | string | bool | complex | identifier
-  block                    = statement . | { semicolon_statement_list statement . }
-  semicolon_statement_list = statement ; | statement ; semicolon_statement_list | <epsilon>
+  block                    = statement . | { semicolon_statement_list . }
+  semicolon_statement_list = statement | statement ; semicolon_statement_list
   comma_statement_list     = statement | statement , comma_statement_list
   statement                = block | conditional | declaration | expr | ( comma_statement_list )
   conditional              = when expr -> block | when expr -> block else block

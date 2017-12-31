@@ -3,9 +3,77 @@
 
 ast_node *parse_type(parser *parse);
 
+ast_node *parse_statement(parser *parse)
+{
+    ast_node *new = make_node(statement);
+    while(peek_tok(parse)->type != ';' &&
+	  peek_tok(parse)->type != '.')
+	next_tok(parse);
+    return(new);
+}
+
+ast_node *parse_semicolon_statement_list(parser *parse)
+{
+    ast_node *new = make_node(semicolon_statement_list);
+    new->production[0] = parse_statement(parse);
+    if(peek_tok(parse)->type == '.')
+	return(new);
+    next_tok(parse);
+    if(parse->curr_tok->type == ';')
+    {
+	new->production[1] = make_terminal(parse);
+	next_tok(parse);
+	new->production[2] = parse_semicolon_statement_list(parse);
+    }
+    else
+    {
+	new->production[1] = parser_error(parse, "; expected");
+    }
+    return(new);
+}
+
 ast_node *parse_block(parser *parse)
 {
-    return(NULL);
+    ast_node *new = make_node(block);
+    int i = 0;
+    if(parse->curr_tok->type == '{')
+    {
+	new->production[i++] = make_terminal(parse);
+	next_tok(parse);
+	new->production[i++] = parse_semicolon_statement_list(parse);
+	next_tok(parse);
+	if(parse->curr_tok->type == '.')
+	{
+	    new->production[i++] = make_terminal(parse);
+	    next_tok(parse);
+	    if(parse->curr_tok->type == '}')
+	    {
+		new->production[i++] = make_terminal(parse);
+	    }
+	    else
+	    {
+		new->production[--i] = parser_error(parse, "} expected");
+	    }
+	}
+	else
+	{
+	    new->production[--i] = parser_error(parse, ". expected");
+	}
+    }
+    else
+    {
+	new->production[i++] = parse_statement(parse);
+	next_tok(parse);
+	if(parse->curr_tok->type == '.')
+	{
+	    new->production[i++] = make_terminal(parse);
+	}
+	else
+	{
+	    new->production[--i] = parser_error(parse, ". expected");
+	}
+    }
+    return(new);
 }
 
 ast_node *parse_type_list(parser *parse)
@@ -205,6 +273,11 @@ ast_node *parse_single_or_mult_return_function(parser *parse)
 					new->production[i++] = parser_error(parse, ") expected");
 				    }
 				}
+				else
+				{
+				    new->production[i++] = parse_type(parse);
+				}
+				next_tok(parse);
 				new->production[i++] = parse_block(parse);
 			    }
 			    else
@@ -217,6 +290,7 @@ ast_node *parse_single_or_mult_return_function(parser *parse)
 			    new->production[--i] = parser_error(parse, ") expected");
 			}
 		    }
+		    else
 		    {
 			new->production[--i] = parser_error(parse, "( expected");
 		    }
