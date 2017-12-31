@@ -26,9 +26,12 @@
   block                    = statement . | { semicolon_statement_list . }
   semicolon_statement_list = statement | statement ; semicolon_statement_list
   comma_statement_list     = statement | statement , comma_statement_list
-  statement                = block | conditional | declaration | expr | ( comma_statement_list )
+  prn_comma_statement_list = ( comma_statement_list )
+  statement                = block | conditional | declaration | expr | prn_comma_statement_list
   conditional              = when expr -> block | when expr -> block else -> block
-  declaration              = let identifier : type  -> block | let ( identifier_list ) : ( type_list ) -> block
+  declaration              = single_decl | mult_decl
+  single_decl              = let identifier : type -> block
+  mult_decl                = let ( identifier_list ) : ( type_list ) -> block
   expr                     = ( type ) expr | ( expr ) | expr1
   expr1                    = expr operator1 expr | expr2
   operator1                = <vertical bar> | ^ | &
@@ -67,9 +70,12 @@ typedef enum
     block,
     semicolon_statement_list,
     comma_statement_list,
+    prn_comma_statement_list,
     statement,
     conditional,
     declaration,
+    single_decl,
+    mult_decl,
     expr,
     expr1,
     operator1,

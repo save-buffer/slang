@@ -7,10 +7,89 @@ ast_node *parse_expr(parser *parse);
 ast_node *parse_block(parser *parse);
 ast_node *parse_semicolon_statement_list(parser *parse);
 ast_node *parse_declaration(parser *parse);
+ast_node *parse_identifier_list(parser *parse);
+ast_node *parse_type_list(parser *parse);
+
+ast_node *parse_single_or_mult_decl(parser *parse)
+{
+    ast_node *new = make_node(single_decl);
+    int i = 0;
+    if(parse->curr_tok->type == token_let)
+    {
+	new->production[i++] = make_terminal(parse);
+	next_tok(parse);
+	if(parse->curr_tok->type == '(')
+	{
+	    new->type = mult_decl;
+	    new->production[i++] = make_terminal(parse);
+	    next_tok(parse);
+	    new->production[i++] = parse_identifier_list(parse);
+	    next_tok(parse);
+	    if(parse->curr_tok->type == ')')
+	    {
+		new->production[i++] = make_terminal(parse);
+		next_tok(parse);
+		if(parse->curr_tok->type == ':')
+		{
+		    new->production[i++] = make_terminal(parse);
+		    next_tok(parse);
+		    if(parse->curr_tok->type == '(')
+		    {
+			new->production[i++] = make_terminal(parse);
+			next_tok(parse);
+			new->production[i++] = parse_type_list(parse);
+			next_tok(parse);
+			if(parse->curr_tok->type == ')')
+			    new->production[i++] = make_terminal(parse);
+			else
+			    new->production[i] = parser_error(parse, ") expected");
+		    }
+		    else
+			new->production[i] = parser_error(parse, "( expected");
+		}
+		else
+		    new->production[i] = parser_error(parse, ": expected");
+	    }
+	    else
+		new->production[i] = parser_error(parse, ") expeted");
+	}
+	else if(parse->curr_tok->type == token_id)
+	{
+	    new->production[i++] = make_terminal(parse);
+	    next_tok(parse);
+	    if(parse->curr_tok->type == ':')
+	    {
+		new->production[i++] = make_terminal(parse);
+		next_tok(parse);
+		new->production[i++] = parse_type(parse);
+	    }
+	    else
+		new->production[i] = parser_error(parse, ": expected");
+	}
+	else
+	{
+	    new->production[i] = parser_error(parse, "identifier expected");
+	}
+	if(new->production[i]->type == error)
+	    return(new);
+	next_tok(parse);
+	if(parse->curr_tok->type == token_arrow)
+	{
+	    new->production[i++] = make_terminal(parse);
+	    next_tok(parse);
+	    new->production[i++] = parse_block(parse);
+	}
+	else
+	    new->production[i] = parser_error(parse, "-> expected");
+    }
+    return(new);
+}
 
 ast_node *parse_declaration(parser *parse)
 {
-    return(NULL);
+    ast_node *new = make_node(declaration);
+    new->production[0] = parse_single_or_mult_decl(parse);
+    return(new);
 }
 
 ast_node *parse_conditional(parser *parse)
@@ -59,20 +138,39 @@ ast_node *parse_conditional(parser *parse)
 
 ast_node *parse_comma_statement_list(parser *parse)
 {
-    ast_node *new = make_node(semicolon_statement_list);
-    new->production[0] = parse_statement(parse);
+    ast_node *new = make_node(comma_statement_list);
+    int i = 0;
+    new->production[i++] = parse_statement(parse);
     if(peek_tok(parse)->type == ')')
 	return(new);
     next_tok(parse);
     if(parse->curr_tok->type == ',')
     {
-	new->production[1] = make_terminal(parse);
+	new->production[i++] = make_terminal(parse);
 	next_tok(parse);
-	new->production[2] = parse_semicolon_statement_list(parse);
+	new->production[i++] = parse_semicolon_statement_list(parse);
     }
     else
     {
-	new->production[1] = parser_error(parse, ", expected");
+	new->production[i] = parser_error(parse, ", expected");
+    }
+    return(new);
+}
+
+ast_node *parse_prn_comma_statement_list(parser *parse)
+{
+    ast_node *new = make_node(prn_comma_statement_list);
+    int i = 0;
+    if(parse->curr_tok->type == '(')
+    {
+	new->production[i++] = make_terminal(parse);
+	next_tok(parse);
+	new->production[i++] = parse_comma_statement_list(parse);
+	next_tok(parse);
+	if(parse->curr_tok->type == ')')
+	    new->production[i++] = make_terminal(parse);
+	else
+	    new->production[i] = parser_error(parse, ") expected");
     }
     return(new);
 }
@@ -91,8 +189,12 @@ ast_node *parse_statement(parser *parse)
     case token_let:
 	new->production[0] = parse_declaration(parse);
 	break;
+    case '(':
+	new->production[0] = parse_prn_comma_statement_list(parse);
+	break;
     default:
 	new->production[0] = parse_expr(parse);
+	break;
     }
     return(new);
 }
@@ -137,12 +239,12 @@ ast_node *parse_block(parser *parse)
 	    }
 	    else
 	    {
-		new->production[--i] = parser_error(parse, "} expected");
+		new->production[i] = parser_error(parse, "} expected");
 	    }
 	}
 	else
 	{
-	    new->production[--i] = parser_error(parse, ". expected");
+	    new->production[i] = parser_error(parse, ". expected");
 	}
     }
     else
@@ -155,7 +257,7 @@ ast_node *parse_block(parser *parse)
 	}
 	else
 	{
-	    new->production[--i] = parser_error(parse, ". expected");
+	    new->production[i] = parser_error(parse, ". expected");
 	}
     }
     return(new);
@@ -367,37 +469,37 @@ ast_node *parse_single_or_mult_return_function(parser *parse)
 			    }
 			    else
 			    {
-				new->production[--i] = parser_error(parse, "-> expected");
+				new->production[i] = parser_error(parse, "-> expected");
 			    }
 			}
 			else
 			{
-			    new->production[--i] = parser_error(parse, ") expected");
+			    new->production[i] = parser_error(parse, ") expected");
 			}
 		    }
 		    else
 		    {
-			new->production[--i] = parser_error(parse, "( expected");
+			new->production[i] = parser_error(parse, "( expected");
 		    }
 		}
 		else
 		{
-		    new->production[--i] = parser_error(parse, ": expected");
+		    new->production[i] = parser_error(parse, ": expected");
 		}
 	    }
 	    else
 	    {
-		new->production[--i] = parser_error(parse, ") expected");
+		new->production[i] = parser_error(parse, ") expected");
 	    }
 	}
 	else
 	{
-	    new->production[--i] = parser_error(parse, "( expected");
+	    new->production[i] = parser_error(parse, "( expected");
 	}
     }
     else
     {
-	new->production[--i] = parser_error(parse, "Identifier expected in function declaration");
+	new->production[i] = parser_error(parse, "Identifier expected in function declaration");
     }
     return(new);
 }
@@ -588,12 +690,18 @@ const char *ast_node_to_string(ast_node *node)
 	return("semicolon_statement_list");
     case comma_statement_list:
 	return("comma_statement_list");
+    case prn_comma_statement_list:
+	return("prn_comma_statement_list");
     case statement:
 	return("statement");
     case conditional:
 	return("conditional");
     case declaration:
 	return("declaration");
+    case single_decl:
+	return("single_decl");
+    case mult_decl:
+	return("mult_decl");
     case expr:
 	return("expr");
     case expr1:
