@@ -46,7 +46,69 @@ ast_node *parse_unary_operator(parser *parse)
 	break;
     default:
 	new->production[0] = parser_error(parse, "Error parsing unary operator");
-	break;x
+	break;
+    }
+    return(new);
+}
+
+ast_node *parse_expr2(parser *parse)
+{
+    ast_node *new = make_node(expr2);
+    new->production[0] = parse_expr3(parse);
+    switch(peek_tok(parse)->type)
+    {
+    case '<':
+    case '>':
+    case '=':
+    case token_nequal:
+    case token_ge:
+    case token_le:
+	next_tok(parse);
+	new->production[1] = parse_operator_2(parse);
+	next_tok(parse);
+	new->production[2] = parse_expr2(parse);
+	break;
+    default:
+	break;
+    }
+    return(new);
+}
+
+ast_node *parse_operator2(parser *parse)
+{
+    switch(parse->curr_tok->type)
+    {
+    case '<':
+    case '>':
+    case '=':
+    case token_nequal:
+    case token_ge:
+    case token_le:
+	return(make_terminal(parse));
+    default:
+	return(make_node(error));
+    }
+}
+
+ast_node *parse_expr1(parser *parse)
+{
+    ast_node *new = make_node(expr1);
+    new->production[0] = parse_expr2(parse);
+    switch(peek_tok(parse)->type)
+    {
+    case '<':
+    case '>':
+    case '=':
+    case token_nequal:
+    case token_ge:
+    case token_le:
+	next_tok(parse);
+	new->production[1] = parse_operator_2(parse);
+	next_tok(parse);
+	new->production[2] = parse_expr2(parse);
+	break;
+    default:
+	break;
     }
     return(new);
 }
@@ -64,28 +126,23 @@ ast_node *parse_operator1(parser *parse)
     }
 }
 
-ast_node *parse_expr1(parser *parse)
-{
-    return(NULL);
-}
-
 ast_node *parse_expr(parser *parse)
 {
     ast_node *new = make_node(expr);
-    if(parse->curr_tok->type == '(')
-    {
-	new->production[0] = make_terminal(parse);
-	next_tok(parse);
-	new->production[1] = parse_expr(parse);
-	next_tok(parse);
-	if(parse->curr_tok->type == ')')
-	    new->production[2] = make_terminal(parse);
-	else
-	    new->production[2] = make_node(error);
-	
-	return(new);
-    }
     new->production[0] = parse_expr1(parse);
+    switch(peek_tok(parse)->type)
+    {
+    case '|':
+    case '^':
+    case '&':
+	next_tok(parse);
+	new->production[1] = parse_operator_1(parse);
+	next_tok(parse);
+	new->production[2] = parse_expr1(parse);
+	break;
+    default:
+	break;
+    }
     return(new);
 }
 

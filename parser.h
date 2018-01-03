@@ -7,9 +7,7 @@
 #include <malloc.h>
 #endif
 
-//TODO(sasha): refactor grammar and parser to make type_list and identifier_list allow single items to
-//             not be parenthesized; basically just include the parentheses in the production
-
+//-a.b + c * d
 /*
   program                  = decl_list
   decl_list                = function | type_declaration | function decl_list | type_declaration decl_list
@@ -32,23 +30,23 @@
   declaration              = single_decl | mult_decl
   single_decl              = let identifier : type -> block
   mult_decl                = let ( identifier_list ) : ( type_list ) -> block
-  expr                     = ( expr ) | expr1
-  expr1                    = expr operator1 expr | expr2
+  expr                     = expr1 operator1 expr1 | expr1
   operator1                = <vertical bar> | ^ | &
-  expr2                    = expr operator2 expr | expr3
+  expr1                    = expr2 operator2 expr2 | expr2
   operator2                = < | > | <= | >= | = | !=
-  expr3                    = expr operator3 expr | expr4
+  expr2                    = expr3 operator3 expr3 | expr3
   operator3                = << | >>
-  expr4                    = expr operator4 expr | expr5
+  expr3                    = expr4 operator4 expr4 | expr4
   operator4                = + | -
-  expr5                    = expr operator5 expr | expr6
+  expr4                    = expr5 operator5 expr5 | expr5
   operator5                = * | / | %
-  expr6                    = unary_operator expr | expr7
+  expr5                    = unary_operator expr6 | expr6
   unary_operator           = ~ | ! | cast | * | &
   cast                     = ( type )
-  expr7                    = function_call | array_lookup | expr . identifier | identifier | literal
-  function_call            = expr ( argument_list ) 
-  array_lookup             = expr [ argument_list ]
+  expr6                    = function_call | array_lookup | struct_lookup | identifier | literal | ( expr )
+  function_call            = expr7 ( argument_list ) 
+  array_lookup             = expr7 [ argument_list ]
+  struct_lookup            = expr7 . identifier
   argument_list            = <epsilon> | expr | expr argument_list
  */
 
@@ -77,20 +75,22 @@ typedef enum
     single_decl,
     mult_decl,
     expr,
-    expr1,
     operator1,
-    expr2,
+    expr1,
     operator2,
-    expr3,
+    expr2,
     operator3,
-    expr4,
+    expr3,
     operator4,
-    expr5,
+    expr4,
     operator5,
-    expr6,
+    expr5,
     unary_operator,
     cast,
-    expr7,
+    expr6,
+    function_call,
+    array_lookup,
+    struct_lookup,
     argument_list,
     error,
     eof,
