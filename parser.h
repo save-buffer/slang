@@ -32,7 +32,7 @@
   declaration              = single_decl | mult_decl
   single_decl              = let identifier : type -> block
   mult_decl                = let ( identifier_list ) : ( type_list ) -> block
-  expr                     = ( type ) expr | ( expr ) | expr1
+  expr                     = ( expr ) | expr1
   expr1                    = expr operator1 expr | expr2
   operator1                = <vertical bar> | ^ | &
   expr2                    = expr operator2 expr | expr3

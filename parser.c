@@ -10,6 +10,85 @@ ast_node *parse_declaration(parser *parse);
 ast_node *parse_identifier_list(parser *parse);
 ast_node *parse_type_list(parser *parse);
 
+
+ast_node *parse_cast(parser *parse)
+{
+    ast_node *new = make_node(cast);
+    if(parse->curr_tok->type == '(')
+    {
+	new->production[0] = make_terminal(parse);
+	next_tok(parse);
+	new->production[1] = parse_type(parse);
+	next_tok(parse);
+	if(parse->curr_tok->type == ')')
+	    new->production[2] = make_terminal(parse);
+	else
+	    new->production[2] = make_node(error);
+    }
+    else
+	new->type = error;
+    return(new);
+}
+
+ast_node *parse_unary_operator(parser *parse)
+{
+    ast_node *new = make_node(unary_operator);
+    switch(parse->curr_tok->type)
+    {
+    case '~':
+    case '!':
+    case '*':
+    case '&':	
+	new->production[0] = make_terminal(parse);
+	break;
+    case '(':
+	new->production[0] = parse_cast(parse);
+	break;
+    default:
+	new->production[0] = parser_error(parse, "Error parsing unary operator");
+	break;x
+    }
+    return(new);
+}
+
+ast_node *parse_operator1(parser *parse)
+{
+    switch(parse->curr_tok->type)
+    {
+    case '|':
+    case '^':
+    case '&':
+	return(make_terminal(parse));
+    default:
+	return(make_node(error));
+    }
+}
+
+ast_node *parse_expr1(parser *parse)
+{
+    return(NULL);
+}
+
+ast_node *parse_expr(parser *parse)
+{
+    ast_node *new = make_node(expr);
+    if(parse->curr_tok->type == '(')
+    {
+	new->production[0] = make_terminal(parse);
+	next_tok(parse);
+	new->production[1] = parse_expr(parse);
+	next_tok(parse);
+	if(parse->curr_tok->type == ')')
+	    new->production[2] = make_terminal(parse);
+	else
+	    new->production[2] = make_node(error);
+	
+	return(new);
+    }
+    new->production[0] = parse_expr1(parse);
+    return(new);
+}
+
 ast_node *parse_single_or_mult_decl(parser *parse)
 {
     ast_node *new = make_node(single_decl);
@@ -307,80 +386,6 @@ ast_node *parse_identifier_list(parser *parse)
     {
 	new->production[0] = parser_error(parse, "identifier expected");
     }
-    return(new);
-}
-
-ast_node *parse_cast(parser *parse)
-{
-    ast_node *new = make_node(cast);
-    if(parse->curr_tok->type == '(')
-    {
-	new->production[0] = make_terminal(parse);
-	next_tok(parse);
-	new->production[1] = parse_type(parse);
-	next_tok(parse);
-	if(parse->curr_tok->type == ')')
-	    new->production[2] = make_terminal(parse);
-	else
-	    new->production[2] = make_node(error);
-    }
-    else
-	new->type = error;
-    return(new);
-}
-
-ast_node *parse_unary_operator(parser *parse)
-{
-    ast_node *new = make_node(unary_operator);
-    switch(parse->curr_tok->type)
-    {
-    case '~':
-    case '!':
-    case '*':
-    case '&':
-	new->production[0] = make_terminal(parse);
-	return(new);
-    default:
-	free(new);
-	return(parser_error(parse, "Error parsing unary operator"));
-    }
-}
-
-ast_node *parse_operator1(parser *parse)
-{
-    switch(parse->curr_tok->type)
-    {
-    case '|':
-    case '^':
-    case '&':
-	return(make_terminal(parse));
-    default:
-	return(make_node(error));
-    }
-}
-
-ast_node *parse_expr1(parser *parse)
-{
-    return(NULL);
-}
-
-ast_node *parse_expr(parser *parse)
-{
-    ast_node *new = make_node(expr);
-    if(parse->curr_tok->type == '(')
-    {
-	new->production[0] = make_terminal(parse);
-	next_tok(parse);
-	new->production[1] = parse_expr(parse);
-	next_tok(parse);
-	if(parse->curr_tok->type == ')')
-	    new->production[2] = make_terminal(parse);
-	else
-	    new->production[2] = make_node(error);
-	
-	return(new);
-    }
-    new->production[0] = parse_expr1(parse);
     return(new);
 }
 
