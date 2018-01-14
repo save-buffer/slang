@@ -12,6 +12,18 @@ def point0
     z : r64 -> 0.0;
 }
 
+test_ptr(x) : (i64 **) -> bool ****
+{
+   &x.
+}
+
+test_atom(x) : (i64) -> atom
+{
+    when x > 0 -> Positive.
+    else when x = 0 -> Zero.
+    Negative.
+}
+
 greater_than_ten(x, y) : (i64, i64) -> (bool, bool)
 {
     (x > 10, y > 10).

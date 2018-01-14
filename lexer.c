@@ -268,6 +268,8 @@ void next_token(lexer *lex, token *tok)
 	    tok->type = token_false;
 	else if(strcmp((char *)tok->value, "def") == 0)
 	    tok->type = token_def;
+	else if(strcmp((char *)tok->value, "atom") == 0)
+	    tok->type = token_atom;
 	else
 	    tok->type = token_id;
     }
@@ -461,6 +463,8 @@ const char *token_to_string(token *tok)
 	return("<=");
     case token_nequal:
 	return("!=");
+    case token_atom:
+	return("atom");
     default:
 	return("error");
     }

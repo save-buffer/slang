@@ -20,7 +20,9 @@
   identifier_list          = identifier | identifier , identifier_list
   literal                  = int_literal | real_literal | complex_literal | string_literal | true | false
   type_list                = type | type , type_list
-  type                     = r32 | r64 | i8 | i16 | i32 | i64 | u8 | u16 | u32 | u64 | string | bool | complex | identifier
+  type                     = pointer | basic_type
+  pointer                  = type *
+  basic_type               = r32 | r64 | i8 | i16 | i32 | i64 | u8 | u16 | u32 | u64 | string | bool | complex | identifier | atom
   block                    = statement . | { semicolon_statement_list . }
   semicolon_statement_list = statement | statement ; semicolon_statement_list
   comma_statement_list     = statement | statement , comma_statement_list
@@ -65,6 +67,8 @@ typedef enum
     literal,
     type_list,
     type,
+    pointer,
+    basic_type,
     block,
     semicolon_statement_list,
     comma_statement_list,

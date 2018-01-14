@@ -1,6 +1,7 @@
 #pragma once
 #include "parser.h"
 
+ast_node *parse_operator2(parser *parse);
 ast_node *parse_type(parser *parse);
 ast_node *parse_statement(parser *parse);
 ast_node *parse_expr(parser *parse);
@@ -51,6 +52,27 @@ ast_node *parse_unary_operator(parser *parse)
     return(new);
 }
 
+ast_node *parse_expr3(parser *parse)
+{
+    return(NULL);
+}
+
+ast_node *parse_operator3(parser *parse)
+{
+    ast_node *new = make_node(operator3);
+    switch(parse->curr_tok->type)
+    {
+    case token_lshift:
+    case token_rshift:
+	new->production[0] = make_terminal(parse);
+	break;
+    default:
+	new->production[0] = make_node(error);
+	break;
+    }
+    return(new);
+}
+
 ast_node *parse_expr2(parser *parse)
 {
     ast_node *new = make_node(expr2);
@@ -64,7 +86,7 @@ ast_node *parse_expr2(parser *parse)
     case token_ge:
     case token_le:
 	next_tok(parse);
-	new->production[1] = parse_operator_2(parse);
+	new->production[1] = parse_operator2(parse);
 	next_tok(parse);
 	new->production[2] = parse_expr2(parse);
 	break;
@@ -103,7 +125,7 @@ ast_node *parse_expr1(parser *parse)
     case token_ge:
     case token_le:
 	next_tok(parse);
-	new->production[1] = parse_operator_2(parse);
+	new->production[1] = parse_operator2(parse);
 	next_tok(parse);
 	new->production[2] = parse_expr2(parse);
 	break;
@@ -136,7 +158,7 @@ ast_node *parse_expr(parser *parse)
     case '^':
     case '&':
 	next_tok(parse);
-	new->production[1] = parse_operator_1(parse);
+	new->production[1] = parse_operator1(parse);
 	next_tok(parse);
 	new->production[2] = parse_expr1(parse);
 	break;
@@ -446,7 +468,7 @@ ast_node *parse_identifier_list(parser *parse)
     return(new);
 }
 
-ast_node *parse_type(parser *parse)
+ast_node *parse_basic_type(parser *parse)
 {
     switch(parse->curr_tok->type)
     {
@@ -464,12 +486,42 @@ ast_node *parse_type(parser *parse)
     case token_bool:
     case token_complex:
     case token_id:
+    case token_atom:
 	return(make_terminal(parse));
     default:
 	return(parser_error(parse, "Typename expected"));
     }
 }
 
+ast_node *parse_pointer(parser *parse, ast_node *prev_type)
+{
+    ast_node *new = make_node(pointer);
+    if(parse->curr_tok->type == '*')
+    {
+	new->production[0] = prev_type;
+	new->production[1] = make_terminal(parse);
+	if(peek_tok(parse)->type == '*')
+	{
+	    next_tok(parse);
+	    new = parse_pointer(parse, new);
+	}	
+
+    }
+    return(new);
+}
+
+ast_node *parse_type(parser *parse)
+{
+    ast_node *new = make_node(type);
+    new->production[0] = parse_basic_type(parse);
+    if(peek_tok(parse)->type == '*')
+    {
+	next_tok(parse);
+	new->production[0] = parse_pointer(parse, new->production[0]);
+    }
+    return(new);
+}
+    
 ast_node *parse_single_or_mult_return_function(parser *parse)
 {
     ast_node *new = make_node(single_return_function);
@@ -746,6 +798,10 @@ const char *ast_node_to_string(ast_node *node)
 	return("type_list");
     case type:
 	return("type");
+    case pointer:
+	return("pointer");
+    case basic_type:
+	return("basic_type");
     case block:
 	return("block");
     case semicolon_statement_list:
@@ -778,8 +834,6 @@ const char *ast_node_to_string(ast_node *node)
 	return("expr5");
     case expr6:
 	return("expr6");
-    case expr7:
-	return("expr7");
     case operator1:
 	return("operator1");
     case operator2:
@@ -796,6 +850,12 @@ const char *ast_node_to_string(ast_node *node)
 	return("cast");
     case argument_list:
 	return("argument_list");
+    case function_call:
+	return("function_call");
+    case array_lookup:
+	return("array_lookup");
+    case struct_lookup:
+	return("struct_lookup");
     case eof:
 	return("eof");
     case error:

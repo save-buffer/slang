@@ -45,6 +45,7 @@ typedef enum
     token_lshift = 158,
     token_rshift = 159,
     token_nequal = 160,
+    token_atom = 161,
     token_colon = ':',
     token_semicolon = ';',
     token_exclam = '!',
