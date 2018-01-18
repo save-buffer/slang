@@ -42,13 +42,13 @@
   operator4                = + | -
   expr4                    = expr5 operator5 expr5 | expr5
   operator5                = * | / | %
-  expr5                    = unary_operator expr6 | expr6
+  expr5                    = unary_operator expr5 | expr6
   unary_operator           = ~ | ! | cast | * | &
-  cast                     = ( type )
-  expr6                    = function_call | array_lookup | struct_lookup | identifier | literal | ( expr )
-  function_call            = expr7 ( argument_list ) 
-  array_lookup             = expr7 [ argument_list ]
-  struct_lookup            = expr7 . identifier
+  cast                     = < type >
+  expr6                    = expr7 | expr7 ( argument_list ) | expr7 [ argument_list ] | expr7 . identifier
+  expr7                    = identifier | literal
+  function_call            = expr6 ( argument_list ) 
+  array_lookup             = expr6 [ argument_list ]
   argument_list            = <epsilon> | expr | expr argument_list
  */
 
@@ -92,10 +92,12 @@ typedef enum
     unary_operator,
     cast,
     expr6,
+    expr7,
     function_call,
     array_lookup,
     struct_lookup,
     argument_list,
+    epsilon,
     error,
     eof,
     nonterminal_count,
