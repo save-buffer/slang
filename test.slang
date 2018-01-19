@@ -19,8 +19,8 @@ test_ptr(x) : (i64 **) -> bool ****
 
 test_atom(x) : (i64) -> atom
 {
-    when x > 0 -> Positive.
-    else when x = 0 -> Zero.
+    when x > 0 -> Positive;
+    when x = 0 -> Zero;
     Negative.
 }
 
@@ -38,13 +38,13 @@ pattern_match(x, y) : (i64, i64) -> bool
 ge(x, y) : (i64, i64) -> bool
 {
     when x >= y -> true.
-    else -> false.
+    false.
 }
 
 le(x, y) : (i64, i64) -> bool
 {
     when x <= y -> true.
-    else -> false.
+    false.
 }
 
 less(x, y) : (i64, i64) -> bool
@@ -56,12 +56,11 @@ less(x, y) : (i64, i64) -> bool
 fact(x) : (i32) -> i32
 {
     when x = 0 -> 1.
-    else -> fact(x - 1).
+    fact(x - 1).
 }
 // asdf
 main(argc, argv) : (i32, i8 *) -> complex
 {
-    let a : complex -> -3 - 8i + fact(argc);
-   
+    let a : complex -> -3 - 8i + fact(argc);   
     a.
 }

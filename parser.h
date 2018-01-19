@@ -27,7 +27,7 @@
   comma_statement_list     = statement | statement , comma_statement_list
   prn_comma_statement_list = ( comma_statement_list )
   statement                = block | conditional | declaration | expr | prn_comma_statement_list
-  conditional              = when expr -> block | when expr -> block else -> block
+  conditional              = when expr -> block
   declaration              = single_decl | mult_decl
   single_decl              = let identifier : type -> block
   mult_decl                = let ( identifier_list ) : ( type_list ) -> block

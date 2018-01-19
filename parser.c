@@ -465,25 +465,6 @@ ast_node *parse_conditional(parser *parse)
 	    next_tok(parse);
 	    new->production[i++] = parse_block(parse);
 	    next_tok(parse);
-	    if(parse->curr_tok->type == token_else)
-	    {		
-		new->production[i++] = make_terminal(parse);
-		next_tok(parse);
-		if(parse->curr_tok->type == token_when)
-		{
-		    new->production[i++] = parse_block(parse);
-		}
-		else if(parse->curr_tok->type == token_arrow)
-		{
-		    new->production[i++] = make_terminal(parse);
-		    next_tok(parse);
-		    new->production[i++] = parse_block(parse);
-		}
-		else
-		{
-		    new->production[--i] = parser_error(parse, "-> expected");
-		}
-	    }
 	}
 	else
 	{
@@ -1064,10 +1045,10 @@ const char *ast_node_to_string(ast_node *node)
 	return("eof");
     case error:
     case nonterminal_count:
-	//NOTE(sasha): no default because we want to handle all cases explicitly.
 	//NOTE(sasha): case nonterminal_count should never happen. If it does, there's an error.
 	return("error");
-    }	 
+    }
+    return("error");
 }
 
 static void render_ast_(FILE *diagram, ast_node *cur, int parent)

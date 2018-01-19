@@ -297,6 +297,7 @@ digraph ast
 	node148 [label="identifier"];
 	node138 -> node149;
 	node149 [label="."];
+<<<<<<< HEAD
 	node117 -> node150;
 	node150 [label="else"];
 	node117 -> node151;
@@ -397,4 +398,12 @@ digraph ast
 	node198 [label="error"];
 	node194 -> node199;
 	node199 [label="error"];
+=======
+	node115 -> node150;
+	node150 [label="error"];
+	node113 -> node151;
+	node151 [label="error"];
+	node96 -> node152;
+	node152 [label="error"];
+>>>>>>> fe4d610ffaa678119f9b9294510f0c8267cf1e27
 }
