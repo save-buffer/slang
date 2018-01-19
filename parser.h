@@ -42,13 +42,13 @@
   expr4                    = expr5 operator5 expr5 | expr5
   operator5                = * | / | %
   expr5                    = unary_operator expr5 | expr6
-  unary_operator           = ~ | ! | cast | * | &
+  unary_operator           = ~ | ! | cast | * | & | - | +
   cast                     = < type >
   expr6                    = expr7 | expr7 ( argument_list ) | expr7 [ argument_list ] | expr7 . identifier
   expr7                    = identifier | literal
   function_call            = expr6 ( argument_list ) 
   array_lookup             = expr6 [ argument_list ]
-  argument_list            = <epsilon> | expr | expr argument_list
+  argument_list            = <epsilon> | expr | expr , argument_list
  */
 
 typedef enum
@@ -138,7 +138,7 @@ token *peek_tok(parser *parse)
     return(parse->curr_tok + 1);
 }
 
-void prev_token(parser *parse)
+void prev_tok(parser *parse)
 {
     parse->curr--;
     parse->curr_tok = (parse->curr - 1);

@@ -34,13 +34,16 @@ ast_node *parse_literal(parser *parse)
 ast_node *parse_argument_list(parser *parse)
 {
     ast_node *new = make_node(argument_list);
-    if(peek_tok(parse)->type == ')')
-    {
-	new->production[0] = make_node(epsilon);
-	return(new);
-    }
     new->production[0] = parse_expr(parse);
-    new->production[1] = parse_argument_list(parse);
+    if(peek_tok(parse)->type == ')')
+	return(new);
+    next_tok(parse);
+    if(parse->curr_tok->type == ',')
+    {
+	new->production[1] = make_terminal(parse);
+	next_tok(parse);
+	new->production[2] = parse_argument_list(parse);
+    }
     return(new);
 }
 
@@ -79,17 +82,22 @@ ast_node *parse_expr6(parser *parse)
 	new->production[0] = func;
 	func->production[1] = make_terminal(parse);
 	next_tok(parse);
-	func->production[2] = parse_argument_list(parse);
-	next_tok(parse);
 	if(parse->curr_tok->type == ')')
 	{
-	    next_tok(parse);
-	    func->production[3] = make_terminal(parse);
+	    func->production[2] = make_node(argument_list);
+	    func->production[2]->production[0] = make_node(epsilon);
+	    prev_tok(parse);
 	}
+	else
+	{
+	    func->production[2] = parse_argument_list(parse);
+	}
+	next_tok(parse);
+	if(parse->curr_tok->type == ')')
+	    func->production[3] = make_terminal(parse);
 	else
 	    func->production[3] = parser_error(parse, ") expected");
 	return(new);
-		next_tok(parse);
     case '[':
 	next_tok(parse);
 	ast_node *arr = make_node(array_lookup);
@@ -135,7 +143,7 @@ ast_node *parse_cast(parser *parse)
 	if(parse->curr_tok->type == '>')
 	    new->production[2] = make_terminal(parse);
 	else
-	    new->production[2] = make_node(error);
+	    new->production[2] = parser_error(parse, "Error parsing cast");
     }
     else
 	new->type = error;
@@ -150,7 +158,9 @@ ast_node *parse_unary_operator(parser *parse)
     case '~':
     case '!':
     case '*':
-    case '&':	
+    case '&':
+    case '+':
+    case '-':
 	new->production[0] = make_terminal(parse);
 	break;
     case '<':
@@ -166,13 +176,15 @@ ast_node *parse_unary_operator(parser *parse)
 ast_node *parse_expr5(parser *parse)
 {
     ast_node *new = make_node(expr5);
-    switch(peek_tok(parse)->type)
+    switch(parse->curr_tok->type)
     {
     case '~':
     case '!':
     case '*':
     case '&':
     case '<':
+    case '+':
+    case '-':
 	new->production[0] = parse_unary_operator(parse);
 	next_tok(parse);
 	new->production[1] = parse_expr5(parse);
@@ -207,12 +219,13 @@ ast_node *parse_expr4(parser *parse)
     new->production[0] = parse_expr5(parse);
     switch(peek_tok(parse)->type)
     {
-    case '+':
-    case '-':
+    case '*':
+    case '/':
+    case '%':
 	next_tok(parse);
 	new->production[1] = parse_operator5(parse);
 	next_tok(parse);
-	new->production[2] = parse_expr5(parse);
+	new->production[2] = parse_expr4(parse);
 	break;
     default:
 	break;
@@ -243,12 +256,12 @@ ast_node *parse_expr3(parser *parse)
     new->production[0] = parse_expr4(parse);
     switch(peek_tok(parse)->type)
     {
-    case token_lshift:
-    case token_rshift:
+    case '+':
+    case '-':
 	next_tok(parse);
 	new->production[1] = parse_operator4(parse);
 	next_tok(parse);
-	new->production[2] = parse_expr4(parse);
+	new->production[2] = parse_expr3(parse);
 	break;
     default:
 	break;
@@ -278,16 +291,12 @@ ast_node *parse_expr2(parser *parse)
     new->production[0] = parse_expr3(parse);
     switch(peek_tok(parse)->type)
     {
-    case '<':
-    case '>':
-    case '=':
-    case token_nequal:
-    case token_ge:
-    case token_le:
+    case token_lshift:
+    case token_rshift:
 	next_tok(parse);
 	new->production[1] = parse_operator3(parse);
 	next_tok(parse);
-	new->production[2] = parse_expr3(parse);
+	new->production[2] = parse_expr2(parse);
 	break;
     default:
 	break;
@@ -326,7 +335,7 @@ ast_node *parse_expr1(parser *parse)
 	next_tok(parse);
 	new->production[1] = parse_operator2(parse);
 	next_tok(parse);
-	new->production[2] = parse_expr2(parse);
+	new->production[2] = parse_expr1(parse);
 	break;
     default:
 	break;
@@ -359,7 +368,7 @@ ast_node *parse_expr(parser *parse)
 	next_tok(parse);
 	new->production[1] = parse_operator1(parse);
 	next_tok(parse);
-	new->production[2] = parse_expr1(parse);
+	new->production[2] = parse_expr(parse);
 	break;
     default:
 	break;
@@ -427,7 +436,9 @@ ast_node *parse_single_or_mult_decl(parser *parse)
 	{
 	    new->production[i] = parser_error(parse, "identifier expected");
 	}
-	if(new->production[i]->type == error)
+
+	if(new->production[i] != 0 &&
+	   new->production[i]->type == error)
 	    return(new);
 	next_tok(parse);
 	if(parse->curr_tok->type == token_arrow)
@@ -464,7 +475,6 @@ ast_node *parse_conditional(parser *parse)
 	    new->production[i++] = make_terminal(parse);
 	    next_tok(parse);
 	    new->production[i++] = parse_block(parse);
-	    next_tok(parse);
 	}
 	else
 	{
@@ -490,7 +500,7 @@ ast_node *parse_comma_statement_list(parser *parse)
     {
 	new->production[i++] = make_terminal(parse);
 	next_tok(parse);
-	new->production[i++] = parse_semicolon_statement_list(parse);
+	new->production[i++] = parse_comma_statement_list(parse);
     }
     else
     {
@@ -545,10 +555,14 @@ ast_node *parse_semicolon_statement_list(parser *parse)
 {
     ast_node *new = make_node(semicolon_statement_list);
     new->production[0] = parse_statement(parse);
-    next_tok(parse);
+    if(parse->curr_tok->type == '.')
+	prev_tok(parse);
+    
     if(peek_tok(parse)->type == '.')
 	return(new);
-    next_tok(parse);
+
+    if(peek_tok(parse)->type == ';')
+	next_tok(parse);
     if(parse->curr_tok->type == ';')
     {
 	new->production[1] = make_terminal(parse);
@@ -826,14 +840,14 @@ ast_node *parse_type_specifier(parser *parse)
 		new->production[3] = make_terminal(parse);
 		return(new);
 	    case token_arrow:
-		new->production[4] = make_terminal(parse);
+		new->production[3] = make_terminal(parse);
 		next_tok(parse);
-		new->production[5] = parse_expr(parse);
+		new->production[4] = parse_expr(parse);
 		next_tok(parse);
 		if(parse->curr_tok->type == ';')
-		    new->production[6] = make_terminal(parse);
+		    new->production[5] = make_terminal(parse);
 		else
-		    new->production[6] = parser_error(parse, "; expected");
+		    new->production[5] = parser_error(parse, "; expected");
 		return(new);
 	    default:
 		new->production[3] = parser_error(parse, "Expression or ; expected");

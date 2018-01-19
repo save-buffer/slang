@@ -31,19 +31,19 @@ greater_than_ten(x, y) : (i64, i64) -> (bool, bool)
 
 pattern_match(x, y) : (i64, i64) -> bool
 {
-  let (_, a) -> greater_than_ten(y, x);
+  let (_, a) : (bool, bool) -> greater_than_ten(y, x);
   a.
 }
 
 ge(x, y) : (i64, i64) -> bool
 {
-    when x >= y -> true.
+    when x >= y -> true;
     false.
 }
 
 le(x, y) : (i64, i64) -> bool
 {
-    when x <= y -> true.
+    when x <= y -> true;
     false.
 }
 
@@ -55,12 +55,12 @@ less(x, y) : (i64, i64) -> bool
 /* /* asdfasdf */ */
 fact(x) : (i32) -> i32
 {
-    when x = 0 -> 1.
+    when x = 0 -> 1;
     fact(x - 1).
 }
 // asdf
 main(argc, argv) : (i32, i8 *) -> complex
 {
-    let a : complex -> -3 - 8i + fact(argc);   
+    let a : complex -> -3 - 8i + fact(argc);
     a.
 }
