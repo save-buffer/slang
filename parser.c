@@ -174,7 +174,7 @@ ast_node *parse_expr5(parser *parse)
     case '&':
     case '<':
 	new->production[0] = parse_unary_operator(parse);
-	next_tok(parse);	
+	next_tok(parse);
 	new->production[1] = parse_expr5(parse);
 	break;
     default:
@@ -469,7 +469,11 @@ ast_node *parse_conditional(parser *parse)
 	    {		
 		new->production[i++] = make_terminal(parse);
 		next_tok(parse);
-		if(parse->curr_tok->type == token_arrow || parse->curr_tok->type == token_when)
+		if(parse->curr_tok->type == token_when)
+		{
+		    new->production[i++] = parse_block(parse);
+		}
+		else if(parse->curr_tok->type == token_arrow)
 		{
 		    new->production[i++] = make_terminal(parse);
 		    next_tok(parse);
@@ -612,10 +616,6 @@ ast_node *parse_block(parser *parse)
 	if(parse->curr_tok->type == '.')
 	{
 	    new->production[i++] = make_terminal(parse);
-	}
-	else
-	{
-	    new->production[i] = parser_error(parse, ". expected");
 	}
     }
     return(new);

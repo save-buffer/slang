@@ -7,7 +7,6 @@
 #include <malloc.h>
 #endif
 
-//-a.b + c * d
 /*
   program                  = decl_list
   decl_list                = function | type_declaration | function decl_list | type_declaration decl_list
@@ -23,7 +22,7 @@
   type                     = pointer | basic_type
   pointer                  = type *
   basic_type               = r32 | r64 | i8 | i16 | i32 | i64 | u8 | u16 | u32 | u64 | string | bool | complex | identifier | atom
-  block                    = statement . | { semicolon_statement_list . }
+  block                    = statement . | { semicolon_statement_list . } | statement
   semicolon_statement_list = statement | statement ; semicolon_statement_list
   comma_statement_list     = statement | statement , comma_statement_list
   prn_comma_statement_list = ( comma_statement_list )
