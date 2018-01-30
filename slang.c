@@ -2,6 +2,7 @@
 
 #include "lexer.c"
 #include "parser.c"
+#include "semant.c"
 
 int main(int argc, char **argv)
 {
@@ -24,6 +25,8 @@ int main(int argc, char **argv)
 	print_token_stream(tokenized_src, token_count);
 	ast_node *root = parse(tokenized_src);
 	render_ast("ast.dot", root);
+
+	semantic_analysis(root);
     }
     else
     {
