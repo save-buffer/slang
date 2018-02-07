@@ -1,5 +1,11 @@
 #pragma once
+#include <stdio.h>
+#include <string.h>
+#if defined(__MACH__)
+#include <stdlib.h>
+#else
 #include <malloc.h>
+#endif
 
 typedef struct trie
 {
@@ -7,12 +13,10 @@ typedef struct trie
     ast_node *data;
 } trie;
 
-typedef struct
+typedef struct scope
 {
-    scope *prev;
-    trie *functions;
-    trie *variables;
-    trie *types;
+    struct scope *prev;
+    trie *ids;
 } scope;
 
 typedef struct
@@ -32,44 +36,60 @@ int trie_letter_to_index(char l)
 	return(l - 'A' + 10);
     if(l == '_')
 	return(37);
-    if(l <= 'a' && l <= 'z')
+    if('a' <= l && l <= 'z')
 	return(l - 'a' + 38);
     return(-1);  
 }
 
-void add_to_trie(trie *t, char *id, ast_node *node)
+trie *add_to_trie(trie *t, char *id, ast_node *node)
 {
     if(*id == 0)
     {
 	t->data = node;
-	return;
+	return(t);
     }
     
-    int idx = trie_letter-to_index(*id);
+    int idx = trie_letter_to_index(*id);
     //TODO(sasha): Output an error? That would require passing a semant pointer around.
     if(idx == -1)
-	return;
+    {
+	return(0);
+    }
 
     //TODO(sasha): Make sure current data is freed? Might not be necessary if we write the rest of
     //             the algorithm correctly.
     if(t->next[idx] == 0)
+    {
 	t->next[idx] = malloc(sizeof(trie));
+	memset(t->next[idx], 0, sizeof(trie));
+    }
     
-    add_to_trie(t->next[idx], id + 1, node);
+    return(add_to_trie(t->next[idx], id + 1, node));
 }
 
-int trie_contains(trie *t, char *id)
+ast_node *search_trie(trie *t, char *id)
 {
     if(*id == 0)
-	return(0);
-    
+    {
+	if(t->data == 0)
+	    return(0);
+	else
+	    return(t->data);
+    }
+        
     int idx = trie_letter_to_index(*id);
     if(idx == -1)
 	return(0);
     
     if(t->next[idx] == 0)
 	return(0);
-    return(trie_contains(t->next[idx], id + 1));
+    
+    return(search_trie(t->next[idx], id + 1));
+}
+
+int trie_contains(trie *t, char *id)
+{
+    return(search_trie(t, id) != 0);
 }
 
 scope *push_scope(semant *s)
