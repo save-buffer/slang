@@ -110,6 +110,9 @@ typedef struct
 
 typedef struct ast_node
 {
+    char *file;
+    int line;
+    int column;
     nonterminals type;
     token *terminal;
     struct ast_node *production[16];
@@ -144,9 +147,13 @@ void prev_tok(parser *parse)
     parse->curr_tok = (parse->curr - 1);
 }
 
-ast_node *make_node(nonterminals nonterminal)
+ast_node *make_node(parser *parse, nonterminals nonterminal)
 {
     ast_node *result = malloc(sizeof(ast_node));
+    result->file = parse->curr_tok->file;
+    result->line = parse->curr_tok->line;
+    result->column = parse->curr_tok->column;
+    
     memset(result->production, 0, sizeof(result->production) / sizeof(result->production[0]));
     result->type = nonterminal;
     return(result);
@@ -154,7 +161,7 @@ ast_node *make_node(nonterminals nonterminal)
 
 ast_node *make_terminal(parser *parse)
 {
-    ast_node *result = make_node(terminal);
+    ast_node *result = make_node(parse, terminal);
     result->terminal = parse->curr_tok;
     return(result);
 }
@@ -163,6 +170,6 @@ ast_node *make_terminal(parser *parse)
 ast_node *parser_error(parser *parse, const char *error_string)
 {
     printf("Parser error in %s:%i:%i: %s\n", parse->curr_tok->file, parse->curr_tok->line, parse->curr_tok->column, error_string);
-    return make_node(error);
+    return make_node(parse, error);
 }
 

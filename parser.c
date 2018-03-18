@@ -13,7 +13,7 @@ ast_node *parse_type_list(parser *parse);
 
 ast_node *parse_literal(parser *parse)
 {
-    ast_node *new = make_node(literal);
+    ast_node *new = make_node(parse, literal);
     switch(parse->curr_tok->type)
     {
     case token_int_literal:
@@ -25,7 +25,7 @@ ast_node *parse_literal(parser *parse)
 	new->production[0] = make_terminal(parse);
 	break;
     default:
-	new->production[0] = make_node(error);
+	new->production[0] = make_node(parse, error);
 	break;
     }
     return(new);
@@ -33,7 +33,7 @@ ast_node *parse_literal(parser *parse)
 
 ast_node *parse_argument_list(parser *parse)
 {
-    ast_node *new = make_node(argument_list);
+    ast_node *new = make_node(parse, argument_list);
     new->production[0] = parse_expr(parse);
     if(peek_tok(parse)->type == ')')
 	return(new);
@@ -49,7 +49,7 @@ ast_node *parse_argument_list(parser *parse)
 
 ast_node *parse_expr7(parser *parse)
 {
-    ast_node *new = make_node(expr7);
+    ast_node *new = make_node(parse, expr7);
     switch(parse->curr_tok->type)
     {
     case token_id:
@@ -64,28 +64,28 @@ ast_node *parse_expr7(parser *parse)
 	new->production[0] = parse_literal(parse);
 	break;
     default:
-	return(make_node(error));
+	return(make_node(parse, error));
     }
     return(new);
 }
 
 ast_node *parse_expr6(parser *parse)
 {
-    ast_node *new = make_node(expr6);
+    ast_node *new = make_node(parse, expr6);
     new->production[0] = parse_expr7(parse);
     switch(peek_tok(parse)->type)
     {
     case '(':
 	next_tok(parse);
-	ast_node *func = make_node(function_call);
+	ast_node *func = make_node(parse, function_call);
 	func->production[0] = new->production[0];
 	new->production[0] = func;
 	func->production[1] = make_terminal(parse);
 	next_tok(parse);
 	if(parse->curr_tok->type == ')')
 	{
-	    func->production[2] = make_node(argument_list);
-	    func->production[2]->production[0] = make_node(epsilon);
+	    func->production[2] = make_node(parse, argument_list);
+	    func->production[2]->production[0] = make_node(parse, epsilon);
 	    prev_tok(parse);
 	}
 	else
@@ -100,7 +100,7 @@ ast_node *parse_expr6(parser *parse)
 	return(new);
     case '[':
 	next_tok(parse);
-	ast_node *arr = make_node(array_lookup);
+	ast_node *arr = make_node(parse, array_lookup);
 	arr->production[0] = new->production[0];
 	new->production[0] = arr;
 	arr->production[1] = make_terminal(parse);
@@ -133,7 +133,7 @@ ast_node *parse_expr6(parser *parse)
 
 ast_node *parse_cast(parser *parse)
 {
-    ast_node *new = make_node(cast);
+    ast_node *new = make_node(parse, cast);
     if(parse->curr_tok->type == '<')
     {
 	new->production[0] = make_terminal(parse);
@@ -152,7 +152,7 @@ ast_node *parse_cast(parser *parse)
     
 ast_node *parse_unary_operator(parser *parse)
 {
-    ast_node *new = make_node(unary_operator);
+    ast_node *new = make_node(parse, unary_operator);
     switch(parse->curr_tok->type)
     {
     case '~':
@@ -175,7 +175,7 @@ ast_node *parse_unary_operator(parser *parse)
 
 ast_node *parse_expr5(parser *parse)
 {
-    ast_node *new = make_node(expr5);
+    ast_node *new = make_node(parse, expr5);
     switch(parse->curr_tok->type)
     {
     case '~':
@@ -198,7 +198,7 @@ ast_node *parse_expr5(parser *parse)
 
 ast_node *parse_operator5(parser *parse)
 {
-    ast_node *new = make_node(operator5);
+    ast_node *new = make_node(parse, operator5);
     switch(parse->curr_tok->type)
     {
     case '*':
@@ -207,7 +207,7 @@ ast_node *parse_operator5(parser *parse)
 	new->production[0] = make_terminal(parse);
 	break;
     default:
-	new->production[0] = make_node(error);
+	new->production[0] = make_node(parse, error);
 	break;
     }
     return(new);
@@ -215,7 +215,7 @@ ast_node *parse_operator5(parser *parse)
 
 ast_node *parse_expr4(parser *parse)
 {
-    ast_node *new = make_node(expr4);
+    ast_node *new = make_node(parse, expr4);
     new->production[0] = parse_expr5(parse);
     switch(peek_tok(parse)->type)
     {
@@ -236,7 +236,7 @@ ast_node *parse_expr4(parser *parse)
 
 ast_node *parse_operator4(parser *parse)
 {
-    ast_node *new = make_node(operator4);
+    ast_node *new = make_node(parse, operator4);
     switch(parse->curr_tok->type)
     {
     case '+':
@@ -244,7 +244,7 @@ ast_node *parse_operator4(parser *parse)
 	new->production[0] = make_terminal(parse);
 	break;
     default:
-	new->production[0] = make_node(error);
+	new->production[0] = make_node(parse, error);
 	break;
     }
     return(new);
@@ -252,7 +252,7 @@ ast_node *parse_operator4(parser *parse)
 
 ast_node *parse_expr3(parser *parse)
 {
-    ast_node *new = make_node(expr3);
+    ast_node *new = make_node(parse, expr3);
     new->production[0] = parse_expr4(parse);
     switch(peek_tok(parse)->type)
     {
@@ -271,7 +271,7 @@ ast_node *parse_expr3(parser *parse)
 
 ast_node *parse_operator3(parser *parse)
 {
-    ast_node *new = make_node(operator3);
+    ast_node *new = make_node(parse, operator3);
     switch(parse->curr_tok->type)
     {
     case token_lshift:
@@ -279,7 +279,7 @@ ast_node *parse_operator3(parser *parse)
 	new->production[0] = make_terminal(parse);
 	break;
     default:
-	new->production[0] = make_node(error);
+	new->production[0] = make_node(parse, error);
 	break;
     }
     return(new);
@@ -287,7 +287,7 @@ ast_node *parse_operator3(parser *parse)
 
 ast_node *parse_expr2(parser *parse)
 {
-    ast_node *new = make_node(expr2);
+    ast_node *new = make_node(parse, expr2);
     new->production[0] = parse_expr3(parse);
     switch(peek_tok(parse)->type)
     {
@@ -316,13 +316,13 @@ ast_node *parse_operator2(parser *parse)
     case token_le:
 	return(make_terminal(parse));
     default:
-	return(make_node(error));
+	return(make_node(parse, error));
     }
 }
 
 ast_node *parse_expr1(parser *parse)
 {
-    ast_node *new = make_node(expr1);
+    ast_node *new = make_node(parse, expr1);
     new->production[0] = parse_expr2(parse);
     switch(peek_tok(parse)->type)
     {
@@ -352,13 +352,13 @@ ast_node *parse_operator1(parser *parse)
     case '&':
 	return(make_terminal(parse));
     default:
-	return(make_node(error));
+	return(make_node(parse, error));
     }
 }
 
 ast_node *parse_expr(parser *parse)
 {
-    ast_node *new = make_node(expr);
+    ast_node *new = make_node(parse, expr);
     new->production[0] = parse_expr1(parse);
     switch(peek_tok(parse)->type)
     {
@@ -378,7 +378,7 @@ ast_node *parse_expr(parser *parse)
 
 ast_node *parse_single_or_mult_decl(parser *parse)
 {
-    ast_node *new = make_node(single_decl);
+    ast_node *new = make_node(parse, single_decl);
     int i = 0;
     if(parse->curr_tok->type == token_let)
     {
@@ -455,14 +455,14 @@ ast_node *parse_single_or_mult_decl(parser *parse)
 
 ast_node *parse_declaration(parser *parse)
 {
-    ast_node *new = make_node(declaration);
+    ast_node *new = make_node(parse, declaration);
     new->production[0] = parse_single_or_mult_decl(parse);
     return(new);
 }
 
 ast_node *parse_conditional(parser *parse)
 {
-    ast_node *new = make_node(conditional);
+    ast_node *new = make_node(parse, conditional);
     int i = 0;
     if(parse->curr_tok->type == token_when)
     {
@@ -490,7 +490,7 @@ ast_node *parse_conditional(parser *parse)
 
 ast_node *parse_comma_statement_list(parser *parse)
 {
-    ast_node *new = make_node(comma_statement_list);
+    ast_node *new = make_node(parse, comma_statement_list);
     int i = 0;
     new->production[i++] = parse_statement(parse);
     if(peek_tok(parse)->type == ')')
@@ -511,7 +511,7 @@ ast_node *parse_comma_statement_list(parser *parse)
 
 ast_node *parse_prn_comma_statement_list(parser *parse)
 {
-    ast_node *new = make_node(prn_comma_statement_list);
+    ast_node *new = make_node(parse, prn_comma_statement_list);
     int i = 0;
     if(parse->curr_tok->type == '(')
     {
@@ -529,7 +529,7 @@ ast_node *parse_prn_comma_statement_list(parser *parse)
 
 ast_node *parse_statement(parser *parse)
 {
-    ast_node *new = make_node(statement);
+    ast_node *new = make_node(parse, statement);
     switch(parse->curr_tok->type)
     {
     case token_when:
@@ -553,7 +553,7 @@ ast_node *parse_statement(parser *parse)
 
 ast_node *parse_semicolon_statement_list(parser *parse)
 {
-    ast_node *new = make_node(semicolon_statement_list);
+    ast_node *new = make_node(parse, semicolon_statement_list);
     new->production[0] = parse_statement(parse);
     if(parse->curr_tok->type == '.')
 	prev_tok(parse);
@@ -578,7 +578,7 @@ ast_node *parse_semicolon_statement_list(parser *parse)
 
 ast_node *parse_block(parser *parse)
 {
-    ast_node *new = make_node(block);
+    ast_node *new = make_node(parse, block);
     int i = 0;
     if(parse->curr_tok->type == '{')
     {
@@ -618,7 +618,7 @@ ast_node *parse_block(parser *parse)
 
 ast_node *parse_type_list(parser *parse)
 {
-    ast_node *new = make_node(type_list);
+    ast_node *new = make_node(parse, type_list);
     new->production[0] = parse_type(parse);
     if(peek_tok(parse)->type == ')')
 	return(new);
@@ -638,7 +638,7 @@ ast_node *parse_type_list(parser *parse)
 
 ast_node *parse_identifier_list(parser *parse)
 {
-    ast_node *new = make_node(identifier_list);
+    ast_node *new = make_node(parse, identifier_list);
     if(parse->curr_tok->type == token_id)
     {
 	new->production[0] = make_terminal(parse);
@@ -690,7 +690,7 @@ ast_node *parse_basic_type(parser *parse)
 
 ast_node *parse_pointer(parser *parse, ast_node *prev_type)
 {
-    ast_node *new = make_node(pointer);
+    ast_node *new = make_node(parse, pointer);
     if(parse->curr_tok->type == '*')
     {
 	new->production[0] = prev_type;
@@ -707,7 +707,7 @@ ast_node *parse_pointer(parser *parse, ast_node *prev_type)
 
 ast_node *parse_type(parser *parse)
 {
-    ast_node *new = make_node(type);
+    ast_node *new = make_node(parse, type);
     new->production[0] = parse_basic_type(parse);
     if(peek_tok(parse)->type == '*')
     {
@@ -719,7 +719,7 @@ ast_node *parse_type(parser *parse)
     
 ast_node *parse_single_or_mult_return_function(parser *parse)
 {
-    ast_node *new = make_node(single_return_function);
+    ast_node *new = make_node(parse, single_return_function);
     int i = 0;
     if(parse->curr_tok->type == token_id)
     {
@@ -815,7 +815,7 @@ ast_node *parse_single_or_mult_return_function(parser *parse)
 
 ast_node *parse_function(parser *parse)
 {
-    ast_node *new = make_node(function);
+    ast_node *new = make_node(parse, function);
     new->production[0] = parse_single_or_mult_return_function(parse);
     next_tok(parse);
     return(new);
@@ -823,7 +823,7 @@ ast_node *parse_function(parser *parse)
 
 ast_node *parse_type_specifier(parser *parse)
 {
-    ast_node *new = make_node(type_specifier);
+    ast_node *new = make_node(parse, type_specifier);
     if(parse->curr_tok->type == token_id)
     {
 	new->production[0] = make_terminal(parse);
@@ -868,7 +868,7 @@ ast_node *parse_type_specifier(parser *parse)
 
 ast_node *parse_type_specifier_list(parser *parse)
 {
-    ast_node *new = make_node(type_specifier_list);
+    ast_node *new = make_node(parse, type_specifier_list);
     new->production[0] = parse_type_specifier(parse);
     if(peek_tok(parse)->type == '}')
 	return(new);
@@ -879,7 +879,7 @@ ast_node *parse_type_specifier_list(parser *parse)
 
 ast_node *parse_type_declaration(parser *parse)
 {
-    ast_node *new = make_node(type_declaration);
+    ast_node *new = make_node(parse, type_declaration);
     if(parse->curr_tok->type == token_def)
     {
 	new->production[0] = make_terminal(parse);
@@ -917,7 +917,7 @@ ast_node *parse_type_declaration(parser *parse)
     }
     else
     {
-	new->production[0] = make_node(error);
+	new->production[0] = make_node(parse, error);
     }
     return(new);
 }
@@ -925,12 +925,12 @@ ast_node *parse_type_declaration(parser *parse)
 ast_node *parse_decl_list(parser *parse)
 {
     consume_comments(parse);
-    ast_node *new = make_node(decl_list);
+    ast_node *new = make_node(parse, decl_list);
     switch(parse->curr_tok->type)
     {
     case token_eof:
 	free(new);
-	return(make_node(eof));
+	return(make_node(parse, eof));
     case token_def:
 	new->production[0] = parse_type_declaration(parse);
 	break;
@@ -947,7 +947,7 @@ ast_node *parse_decl_list(parser *parse)
 
 ast_node *parse_program(parser *parse)
 {
-    ast_node *new = make_node(program);
+    ast_node *new = make_node(parse, program);
     new->production[0] = parse_decl_list(parse);
     return(new);
 }
