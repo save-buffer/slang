@@ -708,11 +708,11 @@ ast_node *parse_pointer(parser *parse, ast_node *prev_type)
 ast_node *parse_type(parser *parse)
 {
     ast_node *new = make_node(parse, type);
-    new->production[0] = parse_basic_type(parse);
+    new->production[TYPE] = parse_basic_type(parse);
     if(peek_tok(parse)->type == '*')
     {
 	next_tok(parse);
-	new->production[0] = parse_pointer(parse, new->production[0]);
+	new->production[POINTER] = parse_pointer(parse, new->production[0]);
     }
     return(new);
 }
@@ -816,7 +816,7 @@ ast_node *parse_single_or_mult_return_function(parser *parse)
 ast_node *parse_function(parser *parse)
 {
     ast_node *new = make_node(parse, function);
-    new->production[0] = parse_single_or_mult_return_function(parse);
+    new->production[FUNCTION] = parse_single_or_mult_return_function(parse);
     next_tok(parse);
     return(new);
 }
@@ -826,31 +826,31 @@ ast_node *parse_type_specifier(parser *parse)
     ast_node *new = make_node(parse, type_specifier);
     if(parse->curr_tok->type == token_id)
     {
-	new->production[0] = make_terminal(parse);
+	new->production[TYPE_SPEC] = make_terminal(parse);
 	next_tok(parse);
 	if(parse->curr_tok->type == ':')
 	{
-	    new->production[1] = make_terminal(parse);
+	    new->production[TYPE_SPEC_COLON] = make_terminal(parse);
 	    next_tok(parse);
-	    new->production[2] = parse_type(parse);
+	    new->production[TYPE_SPEC_TYPE] = parse_type(parse);
 	    next_tok(parse);
 	    switch(parse->curr_tok->type)
 	    {
 	    case ';':
-		new->production[3] = make_terminal(parse);
+		new->production[TYPE_SPEC_NO_INIT_SEMI] = make_terminal(parse);
 		return(new);
 	    case token_arrow:
-		new->production[3] = make_terminal(parse);
+		new->production[TYPE_SPEC_ARROW] = make_terminal(parse);
 		next_tok(parse);
-		new->production[4] = parse_expr(parse);
+		new->production[TYPE_SPEC_EXPR] = parse_expr(parse);
 		next_tok(parse);
 		if(parse->curr_tok->type == ';')
-		    new->production[5] = make_terminal(parse);
+		    new->production[TYPE_SPEC_SEMI] = make_terminal(parse);
 		else
-		    new->production[5] = parser_error(parse, "; expected");
+		    new->production[TYPE_SPEC_SEMI] = parser_error(parse, "; expected");
 		return(new);
 	    default:
-		new->production[3] = parser_error(parse, "Expression or ; expected");
+		new->production[TYPE_SPEC_ARROW] = parser_error(parse, "Expression or ; expected");
 		return(new);
 	    }
 	}
@@ -869,11 +869,11 @@ ast_node *parse_type_specifier(parser *parse)
 ast_node *parse_type_specifier_list(parser *parse)
 {
     ast_node *new = make_node(parse, type_specifier_list);
-    new->production[0] = parse_type_specifier(parse);
+    new->production[TYPE_SPEC] = parse_type_specifier(parse);
     if(peek_tok(parse)->type == '}')
 	return(new);
     next_tok(parse);
-    new->production[1] = parse_type_specifier_list(parse);
+    new->production[TYPE_SPEC_LIST] = parse_type_specifier_list(parse);
     return(new);
 }
 
@@ -882,42 +882,41 @@ ast_node *parse_type_declaration(parser *parse)
     ast_node *new = make_node(parse, type_declaration);
     if(parse->curr_tok->type == token_def)
     {
-	new->production[0] = make_terminal(parse);
+	new->production[DEF] = make_terminal(parse);
 	next_tok(parse);
 	if(parse->curr_tok->type == token_id)
 	{
-	    new->production[1] = make_terminal(parse);
+	    new->production[TYPE_NAME] = make_terminal(parse);
 	    next_tok(parse);
 	    if(parse->curr_tok->type == '{')
 	    {
-		new->production[2] = make_terminal(parse);
+		new->production[L_CURLY] = make_terminal(parse);
 		next_tok(parse);
-		new->production[3] = parse_type_specifier_list(parse);
+		new->production[TYPE_SPEC_LIST] = parse_type_specifier_list(parse);
 		next_tok(parse);
 		if(parse->curr_tok->type == '}')
 		{
-		    new->production[4] = make_terminal(parse);
+		    new->production[R_CURLY] = make_terminal(parse);
 		    next_tok(parse);
 		}
 		else
 		{
-		    new->production[4] = parser_error(parse, "} expected");
+		    new->production[R_CURLY] = parser_error(parse, "} expected");
 		}
 	    }
 	    else
 	    {
-		new->production[2] = parser_error(parse, "{ expected");
+		new->production[L_CURLY] = parser_error(parse, "{ expected");
 	    }
 	}
 	else
 	{
-
-	    new->production[1] = parser_error(parse, "identifier expected");
+	    new->production[DECL_LIST] = parser_error(parse, "identifier expected");
 	}
     }
     else
     {
-	new->production[0] = make_node(parse, error);
+	new->production[DEF] = make_node(parse, error);
     }
     return(new);
 }
@@ -932,23 +931,23 @@ ast_node *parse_decl_list(parser *parse)
 	free(new);
 	return(make_node(parse, eof));
     case token_def:
-	new->production[0] = parse_type_declaration(parse);
+	new->production[TYPE_DECLARATION] = parse_type_declaration(parse);
 	break;
     case token_id:
-	new->production[0] = parse_function(parse);
+	new->production[FUNCTION] = parse_function(parse);
 	break;
     default:
 	free(new);
 	return(parser_error(parse, "Function or type declaration expected"));
     }
-    new->production[1] = parse_decl_list(parse);
+    new->production[DECL_LIST] = parse_decl_list(parse);
     return(new);
 }
 
 ast_node *parse_program(parser *parse)
 {
     ast_node *new = make_node(parse, program);
-    new->production[0] = parse_decl_list(parse);
+    new->production[PROGRAM] = parse_decl_list(parse);
     return(new);
 }
 
