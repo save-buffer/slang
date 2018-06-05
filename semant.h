@@ -1,4 +1,4 @@
-A#pragma once
+#pragma once
 #include <stdio.h>
 #include <string.h>
 #if defined(__MACH__)
