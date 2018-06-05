@@ -24,8 +24,8 @@ void add_functions_and_types(scope *global_scope, ast_node *ast)
 {
     if(ast->production[0]->type == type_declaration)
 	add_to_trie(global_scope->ids, (char *)(ast->production[0]->production[1]->terminal->value), ast->production[0]);
-    else
-	add_to_trie(global_scope->ids, (char *)(ast->production[0]->production[0]->terminal->value), ast->production[0]);
+    else if(ast->production[0]->type == function)
+	add_to_trie(global_scope->ids, (char *)(ast->production[0]->production[0]->production[0]->terminal->value), ast->production[0]);
     
     if(ast->production[1]->type != eof)
 	add_functions_and_types(global_scope, ast->production[1]);
