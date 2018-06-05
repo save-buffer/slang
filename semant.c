@@ -33,7 +33,7 @@ void add_functions_and_types(scope *global_scope, ast_node *ast)
 
 int add_params(semant *s)
 {
-  
+    
 }
 
 int count_comma_list(ast_node *list)
