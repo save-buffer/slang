@@ -1,1 +1,2 @@
 gcc -std=c11 -Wall -ggdb slang.c -o slang
+./slang test.slang

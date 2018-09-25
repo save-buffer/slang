@@ -1,9 +1,14 @@
 #include "semant.h"
 
+// TODO(sasha): Switch to global type table that maps int -> string
+//              so we can just pass ints around instead of doing a string
+//              compare every time we type check something.
+
 void add_basic_types(trie *t)
 {
     ast_node *dummy_node = malloc(sizeof(ast_node));
     dummy_node->type = basic_type;
+    dummy_node->is_typename = 1;
     add_to_trie(t, "r32", dummy_node);
     add_to_trie(t, "r64", dummy_node);
     add_to_trie(t, "i8", dummy_node);
@@ -22,42 +27,68 @@ void add_basic_types(trie *t)
 
 void add_functions_and_types(scope *global_scope, ast_node *ast)
 {
+    char *id = 0;
+    
     if(ast->production[0]->type == type_declaration)
-	add_to_trie(global_scope->ids, (char *)(ast->production[0]->production[1]->terminal->value), ast->production[0]);
+        id = ast->production[0]->production[1]->terminal->value;
     else if(ast->production[0]->type == function)
-	add_to_trie(global_scope->ids, (char *)(ast->production[0]->production[0]->production[0]->terminal->value), ast->production[0]);
+        id = (char *)(ast->production[0]->production[0]->production[0]->terminal->value);
+
+    ast_node *existing_node = 0;
+    if((existing_node = search_trie(global_scope->ids, id)))
+    {
+        char buff[512];
+        snprintf(buff,
+		 sizeof(buff),
+		 "Identifier %s already exists. Previous definition at %s:%i:%i",
+		 id,
+		 existing_node->file,
+		 existing_node->line,
+		 existing_node->column);
+	return;
+    }
+        
+    add_to_trie(global_scope->ids,
+		id,
+                ast->production[0]);
     
     if(ast->production[1]->type != eof)
-	add_functions_and_types(global_scope, ast->production[1]);
+        add_functions_and_types(global_scope, ast->production[1]);
 }
 
-int add_params(semant *s)
+int add_params(semant *s, ast_node *param_list)
 {
+    if(!param_list)
+        return(0);
+    param_list->production[0]->is_typename = 0;
+    add_to_trie(s->curr_scope->ids, (char *)param_list->production[0]->terminal->value, param_list->production[0]);
+    return(1 + add_params(s, param_list->production[2]));
 }
 
-int count_comma_list(ast_node *list)
+int add_param_types(semant *s, ast_node *type_list)
 {
-    if(list == 0)
-	return(0);
-    return(1 + count_comma_list(list->production[2]));
+    if(!type_list)
+        return(0);
+    type_list->production[0]->is_typename = 1;
+    add_to_trie(s->curr_scope->ids, (char *)type_list->production[0]->terminal->value, type_list->production[0]);
+    return(1 + add_params(s, type_list->production[2]));
 }
 
-void typecheck(semant *s, ast_node *ast)
+void add_return_types(semant *s, ast_node *fun, ast_node *return_list)
 {
-    if(ast->production[0]->type == function)
-    {
-	push_scope(s);
-	ast_node *fun = ast->production[0]->production[0];
-	int num_param_ids = count_comma_list(fun->production[2]);
-	int num_param_types = count_comma_list(fun->production[6]);
-	
-	if(num_param_ids != num_param_types)
-	    semant_error(fun->production[2], "Number of identifiers must match number of types");
-	
-	int num_returns = 1;
-	if(fun->type == mult_return_function)
-	    num_returns = count_comma_list(fun->production[10]);
-    }
+    
+}
+
+void typecheck_function(semant *s, ast_node *ast)
+{
+    push_scope(s);
+    ast_node *fun = ast->production[0]->production[0];
+    int num_param_ids = add_params(s, fun->production[2]);
+    int num_param_types = add_param_types(s, fun->production[6]);
+    
+    if(num_param_ids != num_param_types)
+	semant_error(fun->production[2], "Number of parameters must match number of types");
+    ast_node *return_list = fun->production[10];
 }
 
 void semantic_analysis(ast_node *ast)

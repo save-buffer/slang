@@ -38,31 +38,31 @@ int trie_letter_to_index(char l)
 	return(37);
     if('a' <= l && l <= 'z')
 	return(l - 'a' + 38);
-    return(-1);  
+    return(-1);
 }
 
-trie *add_to_trie(trie *t, char *id, ast_node *node)
+void add_to_trie(trie *t, char *id, ast_node *node)
 {
     if(*id == 0)
     {
 	t->data = node;
-	return(t);
+	return;
     }
     
     int idx = trie_letter_to_index(*id);
     //TODO(sasha): Output an error? That would require passing a semant pointer around.
     if(idx == -1)
-	return(0);
+	return;
 
     //TODO(sasha): Make sure current data is freed? Might not be necessary if we write the rest of
     //             the algorithm correctly.
-    if(t->next[idx] == 0)
+    if(!t->next[idx])
     {
 	t->next[idx] = malloc(sizeof(trie));
 	memset(t->next[idx], 0, sizeof(trie));
     }
     
-    return(add_to_trie(t->next[idx], id + 1, node));
+    add_to_trie(t->next[idx], id + 1, node);
 }
 
 ast_node *search_trie(trie *t, char *id)

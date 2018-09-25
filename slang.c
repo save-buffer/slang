@@ -30,7 +30,8 @@ int main(int argc, char **argv)
     }
     else
     {
-	printf("incorrect usage\n");
+	printf("Usage: ./slang [filename]\n");
     }
+    // Why free things when the OS will do it for us?
     return(0);
 }

@@ -116,6 +116,10 @@ typedef struct ast_node
     nonterminals type;
     token *terminal;
     struct ast_node *production[16];
+
+    // For use during semantic analysis
+    _Bool is_typename;
+    char *return_types[256];
 } ast_node;
 
 void next_tok_(parser *parse)

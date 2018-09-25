@@ -741,10 +741,10 @@ ast_node *parse_single_or_mult_return_function(parser *parse)
 		    next_tok(parse);
 		    if(parse->curr_tok->type == '(')
 		    {
-			new->production[i++] = make_terminal(parse);
-			next_tok(parse);
-			new->production[i++] = parse_type_list(parse);
-			next_tok(parse);
+                        new->production[i++] = make_terminal(parse);
+                        next_tok(parse);
+                        new->production[i++] = parse_type_list(parse);
+                        next_tok(parse);
 			if(parse->curr_tok->type == ')')
 			{
 			    new->production[i++] = make_terminal(parse);
