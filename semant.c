@@ -76,7 +76,12 @@ int add_param_types(semant *s, ast_node *type_list)
 
 void add_return_types(semant *s, ast_node *fun, ast_node *return_list)
 {
-    
+    if(!return_list)
+        return;
+    return_list->production[0]->is_typename = 1;
+    fun->return_types[fun->num_return_types++] = (char *)return_list->production[0]->terminal->value;
+
+    add_return_types(s, fun, return_list->production[2]);
 }
 
 void typecheck_function(semant *s, ast_node *ast)
@@ -89,6 +94,8 @@ void typecheck_function(semant *s, ast_node *ast)
     if(num_param_ids != num_param_types)
 	semant_error(fun->production[2], "Number of parameters must match number of types");
     ast_node *return_list = fun->production[10];
+
+    add_return_types(s, fun, return_list);
 }
 
 void semantic_analysis(ast_node *ast)

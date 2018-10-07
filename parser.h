@@ -120,6 +120,7 @@ typedef struct ast_node
     // For use during semantic analysis
     _Bool is_typename;
     char *return_types[256];
+    int num_return_types;
 } ast_node;
 
 void next_tok_(parser *parse)
