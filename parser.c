@@ -612,6 +612,10 @@ ast_node *parse_block(parser *parse)
 	{
 	    new->production[i++] = make_terminal(parse);
 	}
+	else
+	{
+	    new->production[i] = parser_error(parse, ". expected");
+	}
     }
     return(new);
 }
@@ -723,46 +727,46 @@ ast_node *parse_single_or_mult_return_function(parser *parse)
     int i = 0;
     if(parse->curr_tok->type == token_id)
     {
-	new->production[i++] = make_terminal(parse);
+	new->production[i++] = make_terminal(parse); // 1
 	next_tok(parse);
 	if(parse->curr_tok->type == '(')
 	{
-	    new->production[i++] = make_terminal(parse);
+	    new->production[i++] = make_terminal(parse); // 2
 	    next_tok(parse);
-	    new->production[i++] = parse_identifier_list(parse);
+	    new->production[i++] = parse_identifier_list(parse); // 3
 	    next_tok(parse);
 	    if(parse->curr_tok->type == ')')
 	    {
-		new->production[i++] = make_terminal(parse);
+		new->production[i++] = make_terminal(parse); // 4
 		next_tok(parse);
 		if(parse->curr_tok->type == ':')
 		{
-		    new->production[i++] = make_terminal(parse);
+		    new->production[i++] = make_terminal(parse); // 5
 		    next_tok(parse);
 		    if(parse->curr_tok->type == '(')
 		    {
-                        new->production[i++] = make_terminal(parse);
+                        new->production[i++] = make_terminal(parse); // 6
                         next_tok(parse);
-                        new->production[i++] = parse_type_list(parse);
+                        new->production[i++] = parse_type_list(parse); // 7
                         next_tok(parse);
 			if(parse->curr_tok->type == ')')
 			{
-			    new->production[i++] = make_terminal(parse);
+			    new->production[i++] = make_terminal(parse); // 8
 			    next_tok(parse);
 			    if(parse->curr_tok->type == token_arrow)
 			    {
-				new->production[i++] = make_terminal(parse);
+				new->production[i++] = make_terminal(parse); // 9
 				next_tok(parse);
 				if(parse->curr_tok->type == '(')
 				{
 				    new->type = mult_return_function;
-				    new->production[i++] = make_terminal(parse);
+				    new->production[i++] = make_terminal(parse); // 10
 				    next_tok(parse);
-				    new->production[i++] = parse_type_list(parse);
+				    new->production[i++] = parse_type_list(parse); // 11
 				    next_tok(parse);
 				    if(parse->curr_tok->type == ')')
 				    {
-					new->production[i++] = make_terminal(parse);
+					new->production[i++] = make_terminal(parse); // 12
 				    }
 				    else
 				    {
@@ -771,10 +775,10 @@ ast_node *parse_single_or_mult_return_function(parser *parse)
 				}
 				else
 				{
-				    new->production[i++] = parse_type(parse);
+				    new->production[i++] = parse_type(parse); // 10
 				}
 				next_tok(parse);
-				new->production[i++] = parse_block(parse);
+				new->production[i++] = parse_block(parse); // 11 or 13
 			    }
 			    else
 			    {

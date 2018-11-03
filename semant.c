@@ -45,6 +45,7 @@ void add_functions_and_types(scope *global_scope, ast_node *ast)
 		 existing_node->file,
 		 existing_node->line,
 		 existing_node->column);
+	semant_error(ast, buff);
 	return;
     }
         
@@ -84,7 +85,31 @@ void add_return_types(semant *s, ast_node *fun, ast_node *return_list)
     add_return_types(s, fun, return_list->production[2]);
 }
 
-void typecheck_function(semant *s, ast_node *ast)
+void semant_stmt(semant *s, ast_node *ast)
+{
+}
+
+void semant_block(semant *s, ast_node *ast)
+{
+    push_scope(s);
+    if(ast->production[0]->type == terminal)
+    {
+	typeof_statement(s, ast->production[1]);
+	ast->num_return_types = ast->production[1]->num_return_types;
+	for(int i = 0; i < ast->num_return_types; i++)
+	    ast->return_types[i] = ast->production[1]->return_types[i];
+    }
+    else
+    {
+	ast_node *curr_stmt_list = ast->production[1];
+	for(;;)
+	{
+	    semant_stmt(s, curr_stmt_list->production[0]);
+	}
+    }
+}
+
+void semant_function(semant *s, ast_node *ast)
 {
     push_scope(s);
     ast_node *fun = ast->production[0]->production[0];
@@ -94,8 +119,11 @@ void typecheck_function(semant *s, ast_node *ast)
     if(num_param_ids != num_param_types)
 	semant_error(fun->production[2], "Number of parameters must match number of types");
     ast_node *return_list = fun->production[10];
-
     add_return_types(s, fun, return_list);
+    assert(fun->type == mult_return_function || (fun->type == single_return_function && fun->num_return_types == 1));
+
+    ast_node *block = fun->production[fun->type == single_return_function ? 11 : 13];
+    semant_block(s, block);
 }
 
 void semantic_analysis(ast_node *ast)

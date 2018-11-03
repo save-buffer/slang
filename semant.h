@@ -1,6 +1,7 @@
 #pragma once
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 #if defined(__MACH__)
 #include <stdlib.h>
 #else
@@ -65,7 +66,7 @@ void add_to_trie(trie *t, char *id, ast_node *node)
     add_to_trie(t->next[idx], id + 1, node);
 }
 
-ast_node *search_trie(trie *t, char *id)
+ast_node *search_trie(trie *t, const char *id)
 {
     if(*id == 0)
 	return(t->data);
@@ -80,7 +81,7 @@ ast_node *search_trie(trie *t, char *id)
     return(search_trie(t->next[idx], id + 1));
 }
 
-int trie_contains(trie *t, char *id)
+_Bool trie_contains(trie *t, const char *id)
 {
     return(search_trie(t, id) != 0);
 }
@@ -122,6 +123,16 @@ void pop_scope(semant *s)
     free_trie(s->curr_scope->ids);
     free(s->curr_scope);
     s->curr_scope = old_scope;
+}
+
+_Bool in_scope(semant *s, const char *id)
+{
+    return(trie_contains(s->curr_scope->ids, id));
+}
+
+ast_node *find(semant *s, const char *id)
+{
+    return(search_trie(s->curr_scope->ids, id));
 }
 
 void semant_error(ast_node *ast, const char *error_string)
